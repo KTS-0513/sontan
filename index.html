@@ -1,0 +1,2261 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="robots" content="noindex, nofollow">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>尊単 ― 君の英語が、読めるまで</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Zen+Maru+Gothic:wght@500;700&family=Cormorant+Garamond:ital,wght@0,500;0,600;0,700;1,500&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,400,0,0&icon_names=lock,volume_up" rel="stylesheet">
+<style>
+/* =========================================================
+   見た目：ノベルゲーム（v0.3・本人が案Bを選んだ）
+   場面の背景（夕方・昼・宵・雨の図書室と昇降口）の上に、会話窓・名札・選択肢・システム窓を重ねる
+   影・ピル・飾りのアイコンは使わない。背景の光と窓は「場面」として描く（memory: app-ui-not-ai-looking / themed-app-design-embody-theme）
+   色は人物（透＝青・陽太＝橙・心の声＝薔薇）と状態（読める＝金・霞む・■■）にだけ使う
+   ========================================================= */
+:root{
+  --ink:#2b2433; --sub:#6f6577; --line:rgba(110,80,100,.22);
+  --panel:rgba(255,251,246,.95); --panel-line:rgba(120,80,96,.3);
+  --win:rgba(38,30,58,.88); --win-line:rgba(255,214,170,.6); --win-ink:#fff8f0; --win-sub:rgba(255,248,240,.66);
+  --gold:#ffd9a8; --peach:#ffecd6; --plum:#4f2c45;
+  --toru:#2f5f9e; --yota:#c96a1f; --voice:#c4577a; --voice-ink:#ffd3df; --note:#7d6a58;
+  --ok:#2c7a53; --fade:#9b97a3;
+  --r:6px;
+  --shade:0 1px 6px rgba(70,35,60,.55);
+}
+*{box-sizing:border-box}
+html,body{margin:0;min-height:100%}
+body{color:var(--ink);background:#e9a58f;font-family:'Zen Maru Gothic',system-ui,-apple-system,sans-serif;font-size:16px;line-height:1.75;-webkit-text-size-adjust:100%}
+button{font:inherit;color:inherit}
+.en{font-family:'Cormorant Garamond',Georgia,'Times New Roman',serif}
+.material-symbols-outlined{font-family:'Material Symbols Outlined';font-weight:normal;font-style:normal;font-size:20px;line-height:1;display:inline-block;width:20px;height:20px;overflow:hidden;vertical-align:-4px;white-space:nowrap;-webkit-font-feature-settings:'liga';font-feature-settings:'liga'}
+
+/* ---------- 場面（背景） ---------- */
+#scene{position:fixed;inset:0;z-index:-1;overflow:hidden;transition:background .8s}
+#scene>*{position:absolute;display:none}
+#scene.sc-eve{background:linear-gradient(180deg,#f6d1a8 0%,#eaa892 45%,#bb849b 80%,#8f6f92 100%)}
+#scene.sc-day{background:linear-gradient(180deg,#fff2df 0%,#f9e0c8 50%,#efc8b8 100%)}
+#scene.sc-dusk{background:linear-gradient(180deg,#f1c4c7 0%,#bd97b9 50%,#857aa9 100%)}
+#scene.sc-rain{background:linear-gradient(180deg,#dfe6ee 0%,#b9c6d4 55%,#97a7bb 100%)}
+#scene .sash{display:block;top:9vh;right:-3vw;width:min(44vw,380px);height:min(52vh,430px);border:7px solid rgba(255,248,236,.55);border-radius:4px 4px 0 0}
+#scene .sash::before{content:'';position:absolute;left:50%;top:0;bottom:0;border-left:6px solid rgba(255,248,236,.55)}
+#scene .sash::after{content:'';position:absolute;top:45%;left:0;right:0;border-top:6px solid rgba(255,248,236,.55)}
+#scene .beam{top:0;height:140vh;background:rgba(255,250,235,.17);transform:rotate(28deg);transform-origin:top}
+#scene.sc-eve .beam,#scene.sc-day .beam{display:block}
+#scene.sc-day .beam{background:rgba(255,255,255,.28)}
+#scene .b1{right:31vw;width:96px}#scene .b2{right:23vw;width:42px}#scene .b3{right:15vw;width:24px}
+#scene .shelf{left:0;bottom:20vh;width:min(58vw,560px);height:190px;flex-wrap:wrap;align-content:flex-end;gap:0 2px;padding:0 12px;opacity:.42}
+#scene.sc-eve .shelf,#scene.sc-day .shelf,#scene.sc-dusk .shelf{display:flex}
+#scene.sc-day .shelf{opacity:.22}
+#scene .shelf i{display:block;background:#4a3446;border-radius:1px 1px 0 0;margin-top:8px}
+#scene .shelf b{display:block;flex-basis:100%;height:5px;background:#4a3446}
+#scene .rain{inset:0;background:repeating-linear-gradient(102deg,transparent 0 26px,rgba(255,255,255,.45) 26px 27px);opacity:.7}
+#scene.sc-rain .rain{display:block}
+#scene .lamp{top:-20vh;left:-20vw;width:80vw;height:80vh;background:radial-gradient(closest-side,rgba(255,224,170,.55),rgba(255,224,170,0))}
+#scene.sc-dusk .lamp{display:block}
+
+/* ---------- 上の帯・タブ ---------- */
+header.top{display:flex;justify-content:space-between;align-items:baseline;gap:12px;max-width:820px;margin:0 auto;padding:12px 16px 4px;color:#fff;text-shadow:var(--shade);background:rgba(38,30,58,.55)}
+.brand{font-weight:700;font-size:20px;letter-spacing:.14em}
+.brand small{font-weight:500;font-size:12px;letter-spacing:.1em;margin-left:10px;opacity:.9}
+body.titled .brand{visibility:hidden}
+body.titled header.top,body.titled nav.tabs{background:transparent}
+.exam{font-size:13px;white-space:nowrap}
+.exam b{font-size:17px}
+nav.tabs{display:flex;gap:2px;max-width:820px;margin:0 auto;padding:0 16px;border-bottom:1px solid rgba(255,214,170,.6);overflow-x:auto;background:rgba(38,30,58,.55);border-radius:0 0 6px 6px}
+nav.tabs button{background:none;border:0;border-bottom:2px solid transparent;padding:10px 12px;min-height:44px;color:rgba(255,255,255,.88);cursor:pointer;white-space:nowrap;letter-spacing:.1em;text-shadow:var(--shade)}
+nav.tabs button.on{color:#fff;border-bottom-color:var(--gold);font-weight:700}
+body.focus nav.tabs, body.focus header.top{display:none}
+main{max-width:820px;margin:0 auto;padding:16px 16px 120px}
+body.focus main{padding-bottom:16px}
+
+/* ---------- システム窓（明るい窓）と文字 ---------- */
+.box,.panel,.ch{background:var(--panel);border:1px solid var(--panel-line);border-radius:var(--r);padding:16px;margin:0 0 14px}
+h2{font-size:20px;margin:4px 0 8px;line-height:1.5}
+h3{font-size:16px;margin:0 0 8px}
+.lbl{margin:0;font-size:13px;color:var(--sub);font-weight:700;letter-spacing:.06em}
+.note{margin:6px 0;font-size:13px;color:var(--sub)}
+.sc-note{margin:8px 0;font-size:13px;color:var(--plum);text-align:center}
+.tag{display:inline-block;font-size:11px;line-height:1.6;padding:0 6px;border:1px solid currentColor;border-radius:3px;color:var(--sub);white-space:nowrap;font-weight:700}
+.tag.ok{color:var(--ok)} .tag.fade{color:var(--fade);border-style:dashed} .tag.toru{color:var(--toru)} .tag.lock{border:0;padding:0}
+.link{background:none;border:0;padding:8px 0;min-height:44px;color:var(--sub);cursor:pointer;text-decoration:underline;text-underline-offset:3px}
+.spk{background:none;border:0;padding:4px;margin:0 0 0 2px;cursor:pointer;color:var(--sub);vertical-align:middle;min-width:32px;min-height:32px}
+
+/* ---------- ボタン（ゲームの選択肢の形） ---------- */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;min-height:48px;padding:10px 18px;border:1px solid var(--plum);background:var(--plum);color:#fff;border-radius:4px;font-weight:700;cursor:pointer;text-align:center;letter-spacing:.06em}
+.btn.ghost{background:transparent;color:var(--plum)}
+.btn.wide{display:flex;width:100%;margin-top:10px}
+.btn:disabled{opacity:.4;cursor:default}
+.btn.vn{background:rgba(38,30,58,.72);border:1px solid rgba(255,255,255,.8);color:#fff;font-weight:700}
+.btn.vn:hover:not(:disabled){background:rgba(38,30,58,.9)}
+.btn.vn.main{background:var(--peach);color:var(--plum);border-color:#fff}
+.btn.vn.main:hover:not(:disabled){background:#fff4e6}
+.menu{display:flex;flex-direction:column;gap:10px;max-width:560px;margin:14px auto}
+.menu .btn{width:100%;min-height:56px;flex-direction:column;gap:0;line-height:1.4}
+.m-k{font-size:11px;letter-spacing:.2em;opacity:.75}
+
+/* ---------- 会話窓（暗い窓）・名札 ---------- */
+.win{position:relative;background:var(--win);border:1px solid var(--win-line);border-radius:8px;color:var(--win-ink);padding:22px 18px 18px;margin:20px 0 12px}
+.win p{margin:0}
+.win .name{position:absolute;top:-14px;left:14px;padding:2px 16px;font-size:13px;font-weight:700;letter-spacing:.15em;border-radius:4px;border:1px solid rgba(255,255,255,.65);background:#6b5a7a;color:#fff}
+.name.toru{background:var(--toru)} .name.yota{background:var(--yota)} .name.voice{background:var(--voice)} .name.note{background:var(--note)} .name.alt{background:#4f8a6b}
+.win .en{font-size:24px;font-weight:600;line-height:1.35;margin:0 0 8px}
+.win .hw{color:var(--gold);font-weight:600;text-decoration:underline;text-underline-offset:4px;text-decoration-thickness:1px}
+.win .ja{font-size:16px}
+.win .v,.v{color:var(--voice-ink)}
+.win .cant{color:var(--win-sub);font-size:12px;margin:8px 0 0}
+.win .next{position:absolute;right:14px;bottom:6px;font-size:12px;animation:blink 1.2s infinite}
+.win .spk{color:rgba(255,255,255,.75)}
+.win .note{color:var(--win-sub)}
+@keyframes blink{50%{opacity:.2}}
+.slot.unk{color:rgba(255,255,255,.42);cursor:pointer;letter-spacing:-.04em}
+.slot.fade{filter:blur(3px);cursor:pointer}
+.slot.ok{color:var(--gold)}
+.slot.new{animation:glow 2.2s ease-out;text-shadow:0 0 10px rgba(255,200,150,.7)}
+@keyframes glow{0%{opacity:0;text-shadow:0 0 26px #fff}50%{opacity:1;text-shadow:0 0 18px #ffd0a0}}
+.spark{position:relative;height:0}
+.spark span{position:absolute;bottom:0;font-size:15px;color:#fff3d6;opacity:0;animation:rise 2.6s ease-out forwards;pointer-events:none}
+@keyframes rise{0%{opacity:0;transform:translateY(0) scale(.6)}20%{opacity:1}100%{opacity:0;transform:translateY(-150px) scale(1.15)}}
+.pop{position:fixed;top:14px;left:50%;transform:translateX(-50%);z-index:20;background:var(--win);border:1px solid var(--win-line);color:#fff;border-radius:4px;padding:6px 18px;font-size:14px;white-space:nowrap;animation:pop .5s ease-out,popout .5s ease-in 1.9s forwards}
+@keyframes pop{from{opacity:0;transform:translate(-50%,-10px)}}
+@keyframes popout{to{opacity:0}}
+
+/* ---------- タイトル画面（ホーム） ---------- */
+.title{text-align:center;color:#fff;text-shadow:0 2px 14px rgba(90,40,70,.5);margin:3vh 0 2vh}
+.title h1{font-size:68px;letter-spacing:.24em;margin:0 0 0 .24em;line-height:1.2;font-weight:700}
+.title p{margin:2px 0 0;letter-spacing:.32em;font-size:13px}
+.gauge{display:flex;align-items:center;gap:10px;max-width:560px;margin:10px auto 0;color:#fff;font-size:12px;font-weight:700;text-shadow:var(--shade)}
+.g-bar{flex:1;height:8px;background:rgba(255,255,255,.35);position:relative;border-radius:1px}
+.g-bar i{position:absolute;left:0;top:0;bottom:0;background:linear-gradient(90deg,#86a9e6,#ffb47a);transition:width .9s}
+.g-heart{position:absolute;top:50%;transform:translate(-50%,-58%);font-size:20px;color:#fff;transition:left .9s}
+.dist-num{text-align:center;margin:6px 0 0;font-size:12px;color:#fff;text-shadow:var(--shade)}
+.dist-num b{font-size:22px;margin:0 3px}
+.dist-num span{display:block;opacity:.9}
+.stats{display:grid;grid-template-columns:repeat(3,1fr)}
+.stats div{padding:4px 0;text-align:center}
+.stats div+div{border-left:1px solid var(--line)}
+.stats .k{display:block;font-size:12px;color:var(--sub)}
+.stats b{font-size:22px}
+.plan{font-size:13px;color:var(--sub);margin:10px 0 0;padding-top:8px;border-top:1px solid var(--line)}
+
+/* ---------- 物語の一覧（チャプター選択） ---------- */
+.ch h3{display:flex;gap:10px;align-items:baseline;border-bottom:1px solid var(--plum);padding-bottom:4px;margin-bottom:0}
+.ch h3 .no{font-size:12px;letter-spacing:.14em;color:var(--sub)}
+.ch.off{opacity:.78}
+.ch.off h3{color:var(--fade);border-bottom-color:var(--line)}
+.ch .meta{font-size:12px;color:var(--sub);margin:4px 0 0}
+.row{display:flex;justify-content:space-between;align-items:center;gap:10px;width:100%;min-height:48px;padding:8px 2px;background:none;border:0;border-bottom:1px solid var(--line);text-align:left;cursor:pointer}
+.row:hover:not(:disabled){background:rgba(255,236,214,.6)}
+.row:disabled{color:var(--fade);cursor:default}
+.row .sub{font-size:12px;color:var(--sub)}
+.warn{font-size:14px;margin:0 0 14px;padding:10px 12px;border:1px solid var(--voice);border-radius:var(--r);color:var(--voice);background:var(--panel)}
+
+/* ---------- 読む（ノベルゲーム） ---------- */
+.q-head{display:flex;justify-content:space-between;align-items:center;gap:8px;font-size:12px;color:#fff;text-shadow:var(--shade);letter-spacing:.1em;background:rgba(38,30,58,.6);border-radius:4px;padding:0 10px;margin:0 0 6px}
+.q-head .link{color:#fff;text-decoration:none;letter-spacing:.18em;padding:8px 4px}
+.q-head .ttl{font-weight:700;text-align:center;flex:1}
+.q-head .cnt{min-width:4em;text-align:right}
+.prog{height:3px;background:rgba(255,255,255,.35);margin:0 0 14px}
+.prog i{display:block;height:100%;background:var(--gold);transition:width .3s}
+.rd{min-height:calc(100vh - 32px);display:flex;flex-direction:column}
+.rd-stage{flex:1;display:flex;flex-direction:column;justify-content:center;cursor:pointer;min-height:120px}
+.rd-msg{position:sticky;bottom:0;padding-bottom:6px;cursor:pointer}
+.rd-msg .win{min-height:150px}
+.recall-k{text-align:center;color:#fff;letter-spacing:.4em;font-size:13px;text-shadow:var(--shade)}
+.gate,.end{cursor:auto;max-width:560px;width:100%;margin:0 auto}
+.gate-words{font-size:20px;color:var(--toru);margin:6px 0}
+.log{position:fixed;inset:0;z-index:10;background:rgba(30,24,46,.94);overflow:auto;cursor:auto}
+.log-in{max-width:760px;margin:0 auto;padding:18px 16px 40px;color:var(--win-ink)}
+.log-t{font-size:12px;letter-spacing:.3em;color:var(--gold);margin:0 0 12px}
+.log-in p{margin:0 0 10px}
+.log-n{color:var(--win-ink)} .log-v{color:var(--voice-ink)}
+.log-s b,.log-e b{display:inline-block;min-width:3em;font-size:12px;margin-right:6px}
+b.toru{color:#9cc0f2} b.yota{color:#ffb67a} b.note{color:#d9c2a6} b.alt{color:#a6dcbd}
+.log-e{border-left:2px solid rgba(255,214,170,.5);padding-left:10px;margin:0 0 12px}
+.log-e .en{font-size:19px;color:#fff;margin:0}
+.log-e .hw{color:var(--gold)}
+.log-gate{text-align:center;font-size:12px;color:var(--win-sub)}
+
+/* ---------- 覚える・問題 ---------- */
+.card{padding:20px 18px}
+.c-en{font-size:42px;margin:0;line-height:1.25;font-weight:600}
+.c-ja{margin:4px 0 0;font-size:18px}
+.win .ex{font-size:20px;line-height:1.5;color:#fff;margin:0 0 4px}
+.win .ex b{color:var(--gold)}
+.win .exja{font-size:15px}
+.win .exja b{color:var(--gold);font-weight:700}
+.win .tk{margin:10px 0 0;font-size:14px;color:var(--voice-ink)}
+.row2{display:grid;grid-template-columns:1fr 2fr;gap:10px;margin-top:12px}
+.row2 .btn{margin:0}
+.q-ask{margin:0 0 6px;font-size:14px;color:var(--sub);font-weight:700}
+.q-word{font-size:44px;text-align:center;margin:10px 0 8px;line-height:1.3;font-weight:600}
+.q-ja{font-size:24px;text-align:center;margin:10px 0 4px;font-weight:700}
+.q-ex{font-size:22px;line-height:1.6;margin:10px 0 2px;color:var(--toru);font-weight:600}
+.exja{margin:4px 0 0;font-size:15px}
+.exja b{font-weight:700}
+.panel .exja b{background:linear-gradient(transparent 62%,#f8d3df 62%)}
+.blank{display:inline-block;min-width:4.5em;height:1.25em;vertical-align:-.25em;border:1.5px solid var(--ink);border-radius:1px;text-align:center}
+.blank.sm{min-width:3em;border-width:1px;border-color:var(--sub)}
+.choices{display:flex;flex-direction:column;gap:10px;max-width:600px;margin:16px auto 0}
+.choice{display:flex;align-items:center;gap:12px;min-height:54px;padding:10px 16px;border:1px solid rgba(255,255,255,.8);background:rgba(38,30,58,.72);color:#fff;border-radius:4px;text-align:left;cursor:pointer}
+.choice:hover:not(:disabled){background:rgba(38,30,58,.9)}
+.choice .k{font-size:12px;color:rgba(255,255,255,.65);min-width:1em}
+.choice.en{font-size:20px;font-weight:600}
+.choice.right{background:var(--peach);color:var(--plum);border-color:#fff;font-weight:700}
+.choice.right .k{color:var(--plum)}
+.choice.wrong{opacity:.6}
+.choice .tag{color:inherit}
+.choice:disabled{cursor:default}
+.fb-r{font-weight:700;font-size:17px;margin:0 0 6px!important}
+.fb.ok .fb-r{color:var(--gold)}
+.fb-a{margin:0 0 6px!important}
+.fb-a .en{font-size:24px;color:var(--gold)}
+.fb-w{margin:8px 0!important}
+.fb-w .en{font-size:22px;font-weight:600;color:var(--gold)}
+.pos{font-size:12px;opacity:.75;margin:0 6px}
+.fb hr{border:0;border-top:1px solid rgba(255,255,255,.2);margin:10px 0}
+.letters{display:flex;justify-content:center;gap:6px;flex-wrap:wrap;margin:14px 0 6px}
+.lt{display:inline-flex;align-items:flex-end;justify-content:center;width:30px;height:38px;border-bottom:2px solid var(--ink);font-family:'Cormorant Garamond',Georgia,serif;font-size:26px;font-weight:600}
+.attempt{text-align:center;font-size:20px;letter-spacing:.08em;margin:6px 0 0;font-family:'Zen Maru Gothic',sans-serif}
+.m{color:var(--ok);text-decoration:underline;text-underline-offset:4px}
+.spell-msg{text-align:center;font-size:13px;color:var(--sub);margin:4px 0}
+.spell{display:flex;gap:8px;margin:12px 0 0}
+.spell input{flex:1;min-width:0;min-height:52px;font-size:22px;padding:6px 12px;border:1px solid var(--plum);border-radius:4px;font-family:'Zen Maru Gothic',sans-serif;background:#fff;color:var(--ink)}
+.spell .btn{margin:0;flex:none;white-space:nowrap}
+.hints{display:flex;gap:18px;flex-wrap:wrap;margin:4px 0 0}
+.result h2{font-size:22px}
+
+/* ---------- 入試の形 ---------- */
+.group{display:flex;flex-wrap:wrap;gap:6px 18px;align-items:baseline;border:1px solid var(--ink);border-radius:2px;padding:8px 12px;margin:12px 0 0;font-size:20px;font-weight:600}
+.group .g-k{font-size:12px;font-weight:700;color:var(--sub);margin-right:4px;font-family:'Zen Maru Gothic',sans-serif}
+.doc{border:1px solid var(--line);background:#fff;border-radius:var(--r);padding:12px 14px;margin:8px 0}
+.doc p{margin:0 0 4px}
+.doc .en{font-size:18px;line-height:1.55}
+.doc-t{font-size:12px;font-weight:700;color:var(--sub);margin:0 0 6px!important}
+.dt{border-collapse:collapse;width:100%;font-size:14px}
+.dt th,.dt td{border:1px solid var(--line);padding:6px 8px;text-align:center}
+.dt th{background:#f6efe6;font-weight:700}
+.dt .sub{display:block;font-size:11px;color:var(--sub)}
+.memo{border:1px dashed var(--ink);border-radius:2px;padding:10px 14px;margin:10px 0 0;background:#fffdf8}
+.memo .en{font-size:20px;margin:0;font-weight:600}
+.scene{font-size:13px;color:var(--sub);margin:6px 0}
+.audio{margin:8px 0 4px}
+.audio .btn{margin:0}
+
+/* ---------- 単語帳・記録・設定 ---------- */
+.subtabs{display:flex;gap:2px;border-bottom:1px solid var(--line);margin:0 0 10px;overflow-x:auto}
+.subtabs button{background:none;border:0;border-bottom:2px solid transparent;padding:8px 10px;min-height:44px;color:var(--sub);cursor:pointer;white-space:nowrap}
+.subtabs button.on{color:var(--ink);border-bottom-color:var(--plum);font-weight:700}
+.search{width:100%;min-height:44px;padding:6px 12px;border:1px solid var(--line);border-radius:var(--r);font:inherit;background:#fff;margin:0 0 6px}
+.wrow{border-bottom:1px solid var(--line)}
+.wbtn{display:grid;grid-template-columns:8.5em 1fr auto;gap:10px;align-items:center;width:100%;min-height:48px;padding:6px 2px;background:none;border:0;text-align:left;cursor:pointer}
+.wbtn .en{font-size:19px;font-weight:600}
+.wbtn .ja{font-size:14px;color:var(--sub)}
+.wdetail{padding:4px 2px 14px}
+.wdetail .ex{margin:0;font-size:18px;color:var(--toru);font-weight:600}
+.wdetail .tk{margin:8px 0 0;font-size:14px;color:var(--voice)}
+.wdetail .meta{font-size:12px;color:var(--sub);margin:8px 0 0}
+table.kv{border-collapse:collapse;width:100%;font-size:14px}
+table.kv td{padding:6px 4px;border-bottom:1px solid var(--line)}
+table.kv td:last-child{text-align:right;font-weight:700}
+table.kv.txt td:last-child{text-align:left;font-weight:400}
+.bars{display:grid;grid-template-columns:repeat(14,1fr);gap:4px;align-items:end;height:90px;border-bottom:1px solid var(--ink);margin-top:8px}
+.bars i{display:block;background:var(--plum);min-height:1px}
+.bars i.zero{background:var(--line)}
+.bar-lbl{display:grid;grid-template-columns:repeat(14,1fr);gap:4px;font-size:10px;color:var(--sub);text-align:center}
+.set label{display:flex;align-items:center;gap:8px;min-height:44px}
+.set input[type=date],.set select{min-height:44px;font:inherit;padding:4px 8px;border:1px solid var(--line);border-radius:var(--r);background:#fff}
+.set textarea{width:100%;font:12px/1.4 ui-monospace,Menlo,monospace;border:1px solid var(--line);border-radius:var(--r);padding:8px;margin-top:8px}
+details pre{white-space:pre-wrap;font:11px/1.5 ui-monospace,Menlo,monospace;max-height:240px;overflow:auto;background:#f4f1ec;padding:8px;border-radius:4px}
+.ver{font-size:12px;color:var(--plum);text-align:center}
+.toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);max-width:90vw;background:var(--win);border:1px solid var(--win-line);color:#fff;padding:10px 16px;border-radius:4px;font-size:14px;z-index:30}
+
+@media (max-width:560px){
+  .c-en{font-size:34px}
+  .q-word{font-size:36px}
+  .title h1{font-size:54px}
+  .win .en{font-size:21px}
+  .wbtn{grid-template-columns:7em 1fr auto}
+  .brand small{display:none}
+  #scene .sash{width:56vw;height:38vh;right:-10vw}
+  #scene .shelf{bottom:26vh}
+}
+</style>
+</head>
+<body>
+<div id="scene" class="sc-eve" aria-hidden="true"></div>
+<header class="top">
+  <div class="brand">尊単<small>君の英語が、読めるまで</small><small id="buildTag"></small></div>
+  <div class="exam" id="examLeft"></div>
+</header>
+<nav class="tabs" id="tabs">
+  <button data-view="home">ホーム</button>
+  <button data-view="story">物語</button>
+  <button data-view="words">単語帳</button>
+  <button data-view="record">記録</button>
+  <button data-view="settings">設定</button>
+</nav>
+<main id="app"><p class="note">読みこみ中……</p></main>
+<div id="toast" class="toast" hidden></div>
+<noscript>このアプリは JavaScript を使います。</noscript>
+<!-- 公開版：Mac の声の音声ファイルは入れない（Apple の利用条件）。生徒の端末の読み上げで鳴る -->
+
+<script>
+'use strict';
+/* =========================================================
+   尊単 v0.3 ― 中学生の英単語 × BL 風の物語（見た目はノベルゲーム）
+   英語のセリフは、その単語を覚えるまで ■■ で読めない。覚えれば読める。忘れると霞む。
+   単一 HTML・通信なし・記録はこの端末の localStorage だけ。
+
+   [S0] 画面組み込みデバッグログ
+   [S1] ユーティリティ
+   [S2] データ：人物・単語・物語（★単語と物語を足すのはここだけ）
+   [S3] Store：記録の読み書き
+   [S4] 記憶の段階（間隔反復）
+   [S5] 読み上げ
+   [S6] UI の部品
+   [S7] ルーティング
+   [S8] ホーム
+   [S9] 物語の一覧・読む
+   [S10] 覚える（単語カード）
+   [S11] 問題（覚える・復習・章末テスト・入試の形・苦手の練習で共通）
+   [S12] 単語帳
+   [S13] 記録
+   [S14] 設定
+   [S15] 検証用の入口（window.TT）
+   [S16] 起動
+   ========================================================= */
+
+/* =========================================================
+   [S0] 画面組み込みデバッグログ（設定タブの下に出す）
+   ========================================================= */
+const LOGS = [];
+(function trapConsole(){
+  const fmt = a => a instanceof Error ? (a.stack || a.message) : (typeof a === 'string' ? a : (() => { try { return JSON.stringify(a); } catch (e) { return String(a); } })());
+  const push = (lv, args) => {
+    LOGS.push(`[${new Date().toLocaleTimeString()}] ${lv} ${[...args].map(fmt).join(' ')}`);
+    if (LOGS.length > 200) LOGS.shift();
+  };
+  ['log', 'warn', 'error'].forEach(lv => {
+    const orig = console[lv].bind(console);
+    console[lv] = (...a) => { push(lv, a); orig(...a); };
+  });
+  window.addEventListener('error', e => push('error', [`${e.message} @${e.lineno || '?'}`]));
+  window.addEventListener('unhandledrejection', e => push('error', [String(e.reason)]));
+})();
+
+/* =========================================================
+   [S1] ユーティリティ
+   ========================================================= */
+const $ = (s, r = document) => r.querySelector(s);
+const esc = s => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const shuffle = a => { a = [...a]; for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; };
+const pick = a => a[Math.floor(Math.random() * a.length)];
+const DAY = 86400000;
+let TIME_SHIFT = 0;                                   // 検証用：日をずらす（TT.shift）
+const now = () => Date.now() + TIME_SHIFT * DAY;
+const dayStart = ms => { const d = new Date(ms); d.setHours(0, 0, 0, 0); return d.getTime(); };
+const ymd = ms => { const d = new Date(ms); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`; };
+const md = ms => { const d = new Date(ms); return `${d.getMonth() + 1}/${d.getDate()}`; };
+/** 英文の印 [form] / [form|id] を外して、読み上げ用の素の文にする */
+const plain = en => en.replace(/\[([^\]|]+)(?:\|[^\]]+)?\]/g, '$1');
+
+/* =========================================================
+   [S2] データ
+   ---------------------------------------------------------
+   単語：W(話, 英語, 品詞, 意味, 例文, 例文の訳, 心の声)
+     例文は覚える語を [ ] で囲む（形が変わってもよい：[waits]）。訳は意味の部分を { } で囲む
+   物語の行：
+     N(地の文) / V(心の声) / Y(陽太のセリフ) / GATE（ここで単語を覚える）
+     E(英文, 訳, 話し手='toru', 名札)
+       英文の語は [form] か [form|単語のid]。訳は {id|訳} で、覚えるまで ■■ になる
+   書いたら TT.lint() で点検する（印と訳の対応・未習の語の混入・ゲートの数）
+   ========================================================= */
+const CAST = {
+  toru: { short: '透', name: '柊 透' },
+  yota: { short: '陽太', name: '日向 陽太' },
+  note: { short: 'ノート', name: 'ノート' },
+  alt: { short: 'ローズ先生', name: 'ローズ先生（ALT）' },   // 大人の先生。恋愛には入れない（SPEC §7）
+};
+/* ---- 版と公開の設定（tools/build_public.mjs が公開版を作るときに BUILD と FEEDBACK_FORM を書き換える） ---- */
+const APP_VERSION = 'v0.6';
+const BUILD = '2026-10-27 10:20';
+/** 気づいたことを送る Google フォームの「事前入力した URL」。値が WHERE / DEVICE / AUDIO / VERSION の欄を、その場の情報に置きかえて開く */
+const FEEDBACK_FORM = "";
+/** 確認モード（URL の末尾に ?dev=1）：全部の話が開き、訳も全部読める。先生が中身を読んで確かめる用。記録には話を読んだことが残る */
+const DEV = /[?&]dev=1(&|$)/.test(location.search);
+const PLANNED_TOTAL = 1352;      // 全体設計の語数＝入試に出た 1,346語＋物語のために入れた6語（data/出る順.tsv・本人の決定 2026-10-27）
+const LOCK_DUE = 10;             // 復習がこの数たまると、新しい話が読めない
+const REVIEW_MAX = 20;           // 1回の復習の最大語数
+const TEST_N = 20;               // 章末テストの問題数
+const PASS_RATE = 0.75;          // 章末テストの合格ライン（入試の形の「書く」問題が入るので 8割→7.5割）
+
+function W(ep, en, pos, ja, ex, exJa, tk) { return { id: en.toLowerCase(), ep, en, pos, ja, ex, exJa, tk }; }   // Japan のような大文字の語も、id は小文字
+const WORDS = [
+  /* ---- 第1章 第1話 図書室の転校生 ---- */
+  W('1-1', 'library', '名', '図書室、図書館', 'He reads alone in the [library] after school.', '彼は放課後、{図書室}でひとり本を読んでいる。', '放課後の図書室でひとり読書する男子。それだけで一冊書ける。'),
+  W('1-1', 'book', '名', '本', 'He closed his [book] and looked at me.', '彼は{本}を閉じて、こちらを見た。', '本を閉じる＝「君に興味がある」の合図（諸説あり）。'),
+  W('1-1', 'read', '動', '読む', "I can't [read] his mind. What is he thinking?", 'あいつの心が{読め}ない。何を考えてるんだ？', '心が読めない男ほど、内心はだいたい大さわぎ。'),
+  W('1-1', 'quiet', '形', '静かな', 'Be [quiet]. ...You are too loud.', '{静かに}して。……君はうるさすぎる。', '「うるさい」と言いつつ、目は離さない。知ってる。'),
+  W('1-1', 'meet', '動', '会う、出会う', 'Nice to [meet] you. ...You have a loud voice.', '{会え}てうれしい。……君、声が大きいね。', '初対面で声の大きさに触れる。距離の詰め方が独特。'),
+  W('1-1', 'name', '名', '名前', 'Tell me your [name]. I want to remember it.', '君の{名前}を教えて。覚えておきたいから。', '「覚えておきたい」。ここ、テストに出ます（出ません）。'),
+  W('1-1', 'new', '形', '新しい', 'He is the [new] student from London.', '彼はロンドンから来た{新しい}生徒――転校生だ。', '転校生、しかも帰国子女。属性の大渋滞。'),
+  W('1-1', 'student', '名', '生徒、学生', 'He is a quiet [student], but his eyes are not quiet.', '彼は物静かな{生徒}だ。でも、目は静かじゃない。', '目が静かじゃない。それはもう、語っている。'),
+  W('1-1', 'window', '名', '窓', 'He always sits by the [window].', '彼はいつも{窓}際の席に座っている。', '窓際＋逆光＋眼鏡。神は細部に宿る。'),
+  W('1-1', 'seat', '名', '席、座席', 'This [seat] is free. You can sit next to me.', 'この{席}、空いてる。隣に座っていいよ。', '「隣に座っていい」。許可の形をした招待状。'),
+  /* ---- 第1章 第2話 緊張すると英語になる ---- */
+  W('1-2', 'speak', '動', '話す', "When I'm nervous, I [speak] English.", '緊張すると、英語を{話し}ちゃうんだ。', '緊張すると英語になる体質。誰の前で緊張してるのか言ってごらん。'),
+  W('1-2', 'understand', '動', '分かる、理解する', "I don't [understand] you. ...But I want to.", '君のことが{分から}ない。……でも、分かりたい。', '「でも、分かりたい」。今月いちばんの名言。'),
+  W('1-2', 'word', '名', '単語、言葉', 'Your [words] always stay in my heart.', '君の{言葉}は、いつも僕の心に残る。', '単語帳アプリで言うセリフじゃない。でも言う。'),
+  W('1-2', 'language', '名', '言語', 'Some feelings are hard to say in any [language].', 'どんな{言語}でも、言いにくい気持ちがある。', '多言語話者が言うと、説得力が違う。'),
+  W('1-2', 'teach', '動', '教える', "I'll [teach] you. Sit closer.", '僕が{教える}よ。もっと近くに座って。', '教えるのに、その距離は必要ですか？（必要です）'),
+  W('1-2', 'learn', '動', '学ぶ、覚える', 'You [learn] fast. I like that about you.', '君は{覚える}のが早いね。そういうところ、いいと思う。', '「いいと思う」の中に、別の二文字が隠れている。'),
+  W('1-2', 'difficult', '形', '難しい', 'This word is [difficult]. But you can do it.', 'この単語は{難しい}。でも、君ならできる。', '教える側がいちばん信じてる。それが尊い。'),
+  W('1-2', 'easy', '形', '簡単な、やさしい', "It's not [easy] to say thank you to him.", '彼に「ありがとう」を言うのは{簡単}じゃない。', '素直になれない子が、ここにも一人。'),
+  W('1-2', 'question', '名', '質問、問題', 'Can I ask you a [question]? ...Why are you always here?', '{質問}してもいい？ ……なんでいつもここにいるの？', '答えは「君が来るから」。知ってる。'),
+  W('1-2', 'answer', '動', '答える、答え', "He didn't [answer]. His ears were red.", '彼は{答え}なかった。耳が赤かった。', '耳が答えている。'),
+  /* ---- 第1章 第3話 閉館まで待つ人 ---- */
+  W('1-3', 'after', '前', '〜のあとで', "I'll wait for you [after] practice.", '練習の{あと}、待ってるから。', '部活終わりを待つ人がいる。それだけで青春が成立する。'),
+  W('1-3', 'wait', '動', '待つ', "I'll [wait]. Even if it takes two hours.", '{待つ}よ。二時間かかっても。', '二時間待てる。それはもう、そういうこと。'),
+  W('1-3', 'together', '副', '一緒に', "Let's go home [together].", '{一緒に}帰ろう。', '中学生の「一緒に帰ろう」は、大人の告白より重い。'),
+  W('1-3', 'every', '形', '毎〜、すべての', 'I see you from the window [every] day.', '{毎}日、窓から君を見てる。', '毎日。ほぼ毎日じゃない。毎日。'),
+  W('1-3', 'tomorrow', '名', '明日', "See you [tomorrow]. ...Don't be late.", 'また{明日}。……遅れるなよ。', '「また明日」がある関係。それ自体が宝。'),
+  W('1-3', 'promise', '動', '約束する、約束', "[Promise] me. You won't give up.", '{約束}して。あきらめないって。', '指切りは英語で pinky promise。調べた。'),
+  W('1-3', 'finish', '動', '終える、終わる', "Let's [finish] this book before summer.", '夏までに、この本を{終わら}せよう。', '読み終わったら、次の本も一緒に読むやつ。'),
+  W('1-3', 'late', '形', '遅れた、遅い', "You're [late]. ...I was worried.", '{遅い}よ。……心配した。', '怒ってるふりをして、本音が先に出る。'),
+  W('1-3', 'home', '副', '家へ、家に', 'I walked him [home] in the rain.', '雨の中、彼を{家}まで送った。', '家まで送る＝別れ際を少しでも先にのばす行為。'),
+  W('1-3', 'walk', '動', '歩く', "Let's [walk] slowly. I don't want this to end.", 'ゆっくり{歩こう}。この時間を終わらせたくない。', '帰り道の速度、だいたい遅い。'),
+  /* ---- 第1章 第4話 同じ高校へ ---- */
+  W('1-4', 'want', '動', '〜がほしい、〜したい', 'I [want] to go to the same school as you.', '君と同じ学校に{行きたい}。', '志望校の理由：君。'),
+  W('1-4', 'same', '形', '同じ', 'Look. We have the [same] pencil case.', '見て。僕ら、{同じ}筆箱だ。', 'おそろいは偶然か、必然か。'),
+  W('1-4', 'dream', '名', '夢', 'My [dream] is to study with you at Seiryo.', '僕の{夢}は、星陵で君と勉強すること。', '夢が具体的すぎる。'),
+  W('1-4', 'future', '名', '将来、未来', 'I made a plan for my [future]. You are in it.', '僕は{将来}の計画を立てた。そこに君がいる。', '将来設計に組みこまれている。重い。最高。'),
+  W('1-4', 'study', '動', '勉強する', "Let's [study] here every day after practice.", '練習のあと、毎日ここで{勉強し}よう。', '勉強は口実。いや、勉強もちゃんとして。'),
+  W('1-4', 'hard', '副', '一生けんめいに、難しい', "He practices [hard] every day. I know because I'm watching.", '彼は毎日{一生けんめい}練習している。見てるから知ってる。', '「見てるから知ってる」。さらっと言うな。'),
+  W('1-4', 'try', '動', 'やってみる、努力する', "Don't give up. [Try] one more time.", 'あきらめないで。もう一回{やってみ}よう。', '何度でもつきあう気だ、この人。'),
+  W('1-4', 'best', '形', 'いちばんよい、最善の', 'You are my [best] friend. ...For now.', '君は僕の{いちばんの}友だち。……今のところは。', '「今のところは」。今のところは！？'),
+  W('1-4', 'believe', '動', '信じる', 'I [believe] in you. More than you do.', '僕は君を{信じてる}。君自身よりも。', '自己肯定感を外付けしてくれる男。'),
+  W('1-4', 'chance', '名', '機会、チャンス', 'We have only one [chance]. Next March.', '{チャンス}は一度だけ。来年の三月。', '入試は一発勝負。恋は……どうだろう。'),
+  /* ---- 第2章 第1話 相合傘 ---- */
+  W('2-1', 'rain', '名', '雨', 'I like the [rain]. Now I like it more.', '{雨}は好きだ。今は、もっと好き。', '雨が好きな理由が、ひとつ増えた。'),
+  W('2-1', 'umbrella', '名', '傘', 'You always forget your [umbrella].', '君はいつも{傘}を忘れるね。', 'なぜ「いつも」を知っているのか。それが問題だ。'),
+  W('2-1', 'wet', '形', 'ぬれた', 'Your shoulder is [wet]. Why?', '肩、{ぬれ}てるじゃん。なんで？', '答え：傘をこっちに傾けていたから。'),
+  W('2-1', 'cold', '形', '寒い、冷たい', 'Your hands are [cold]. Put them in my pocket.', '手、{冷たい}な。俺のポケットに入れろよ。', '冬の定番を、六月に繰り出してくる。'),
+  W('2-1', 'warm', '形', 'あたたかい', 'Your hand is [warm].', '君の手は{あたたかい}。', 'いつ触れた？ 見えなかった。一生の不覚。'),
+  W('2-1', 'share', '動', '分け合う、共有する', 'We [share] one pair of earphones.', '僕らは一つのイヤホンを{分け合う}。', '片耳イヤホン。それはもう実質……。'),
+  W('2-1', 'close', '形', '近い（動詞は「閉める」）', "Come [close]. I can't hear you.", '{近く}に来て。聞こえない。', '本当は聞こえている説が濃厚。'),
+  W('2-1', 'under', '前', '〜の下に', 'Come [under] my umbrella.', '僕の傘の{下}においで。', '相合傘。古来より伝わる、あの儀式。'),
+  W('2-1', 'stand', '動', '立つ', "Don't [stand] in the rain. Come inside.", '雨の中に{立って}ないで。中に入って。', '雨に打たれる男子を、放っておけない男子。'),
+  W('2-1', 'forget', '動', '忘れる', 'I will never [forget] this day.', 'この日のことは、ぜったいに{忘れ}ない。', '私も忘れない。スクショした（心の中で）。'),
+  /* ---- 第2章 第2話 手作りの単語帳 ---- */
+  W('2-2', 'remember', '動', '覚えている、思い出す', 'Do you [remember]? This is where we first met.', '{覚えてる}？ ここが、僕らが初めて会った場所。', '覚えてないわけがない。図書室だもの。'),
+  W('2-2', 'notebook', '名', 'ノート', 'I made this [notebook] for you.', '君のために、この{ノート}を作った。', '手作りの単語帳。ラブレターと同じ成分でできている。'),
+  W('2-2', 'write', '動', '書く', '[Write] my name here. ...In English.', 'ここに僕の名前を{書いて}。……英語で。', 'TORU。四文字にこめる想い。'),
+  W('2-2', 'page', '名', 'ページ', "Don't open the last [page] yet.", '最後の{ページ}は、まだ開けないで。', '開けるなと言われたら開けたくなる。人類の性。'),
+  W('2-2', 'copy', '動', '写す、まねる', "Don't [copy] my answers. Copy my sentences.", '僕の答えを{写す}な。写すなら、僕の文にして。', '厳しいのか甘いのか。両方です。'),
+  W('2-2', 'mistake', '名', '間違い', "That's a [mistake]. ...Here, give me your hand.", 'そこ、{間違い}。……ほら、手、貸して。', '手の上からペンを動かす。図書室の壁になりたい。'),
+  W('2-2', 'check', '動', '確かめる、点検する', 'Let me [check] your answers. ...All correct. Good job.', '答えを{確かめ}させて。……全問正解。よくできました。', '頭ぽんまでがセット。（見えた）'),
+  W('2-2', 'correct', '形', '正しい', "Your answer is [correct]. I'm proud of you.", '君の答えは{正しい}。誇らしいよ。', '「誇らしい」。保護者目線と恋の境目。'),
+  W('2-2', 'letter', '名', '手紙、文字', "I wrote him a [letter], but I didn't send it.", '彼に{手紙}を書いた。でも、送らなかった。', '送らなかった手紙は、たいてい最終章で見つかる。'),
+  W('2-2', 'careful', '形', '注意深い、気をつける', 'Be [careful]. ...You are important to me.', '{気をつけて}。……君は、僕にとって大事だから。', '注意のついでに大事なことを言う技術。'),
+  /* ---- 第2章 第3話 既読、つかない ---- */
+  W('2-3', 'message', '名', 'メッセージ、伝言', 'I read his [message] ten times.', '彼からの{メッセージ}を、十回読んだ。', '既読をつけるまでに十回。気持ちは分かる。'),
+  W('2-3', 'send', '動', '送る', "I can't [send] it. My finger is shaking.", '{送れ}ない。指がふるえてる。', '送信ボタンの前で三十分。青春の停滞。'),
+  W('2-3', 'reply', '動', '返事をする、返事', "He didn't [reply]. Did I say something wrong?", '{返事}が来ない。何か変なこと言ったかな。', '既読スルーの夜は長い。'),
+  W('2-3', 'phone', '名', '電話、スマホ', "I'll keep my [phone] on. Call me anytime.", '{スマホ}の電源、入れておく。いつでも電話して。', '「いつでも」の範囲が広い。'),
+  W('2-3', 'call', '動', '電話する、呼ぶ', '[Call] me by my first name.', '下の名前で{呼んで}。', '呼び方の変化は、関係の変化。'),
+  W('2-3', 'worry', '動', '心配する', "Don't [worry]. I'm not angry.", '{心配}しないで。怒ってないから。', '怒ってないと言う人は、だいたい照れている。'),
+  W('2-3', 'miss', '動', '〜がいなくてさみしい、のがす', "It's only Sunday, and I [miss] you already.", 'まだ日曜なのに、もう君がいなくて{さみしい}。', '一日会えないだけで、これ。'),
+  W('2-3', 'smile', '名', '笑顔、ほほえむ', 'Your [smile] is like the sun.', '君の{笑顔}は太陽みたいだ。', '陽太だけに。……ごめん、言いたかった。'),
+  W('2-3', 'glad', '形', 'うれしい', "I'm [glad] you called me.", '電話をくれて、{うれしい}。', 'しみじみ、じんわり、うれしい顔。'),
+  W('2-3', 'sorry', '形', 'すまなく思う、気の毒で', "I'm [sorry]. I was just shy.", '{ごめん}。ただ、照れてただけなんだ。', '照れてただけ。ただ、照れてただけ。（二回言った）'),
+  /* ---- ここから「入試の出る順」：北海道の公立入試 R6〜R8 に3年とも出た語を、出た回数の多い順に ---- */
+  /* ---- 第2章 第4話 うわさ ---- */
+  W('2-4', 'people', '名', '人々、（〜）人', 'Two [people] can share one umbrella.', '二{人}なら、一本の傘に入れる。', '二人で一つ。数学ではなく、愛の計算。'),
+  W('2-4', 'about', '前', '〜について、およそ', 'We talked [about] you all night.', '一晩中、君{について}話した。', '誰と？ 誰と話したの？（解釈が分かれる）'),
+  W('2-4', 'many', '形', 'たくさんの（数えられるもの）', 'He has [many] friends, but he looks only at me.', '彼には{たくさんの}友だちがいる。でも、僕しか見ていない。', '陽キャの一途。それは最強の属性。'),
+  W('2-4', 'see', '動', '見る、見える、会う', 'I can [see] you from here.', 'ここから、君が{見える}。', '図書室の窓からグラウンド。毎日の定点観測。'),
+  W('2-4', 'talk', '動', '話す', 'We are [talking] in the library. ...Quietly.', '僕らは図書室で{話している}。……小さな声で。', '小声の会話は、距離が近い。物理的に。'),
+  W('2-4', 'think', '動', '思う、考える', 'I [think] about you when it rains.', '雨が降ると、君のことを{考える}。', '雨のたびに思い出す。傘の記憶は強い。'),
+  W('2-4', 'know', '動', '知っている', 'I [know] your favorite song.', '君の好きな歌、{知ってる}。', 'なぜ知っているのか。聞いたのか、調べたのか。'),
+  W('2-4', 'school', '名', '学校', 'We walk to [school] together every morning.', '毎朝、一緒に{学校}へ歩いて行く。', '合流地点で待っている（偶然を装って）。'),
+  W('2-4', 'good', '形', 'よい、上手な', 'You are [good] at English now.', '今の君は、英語が{上手}だね。', '「今の」君は。四月の十八点を知る者の言葉。'),
+  W('2-4', 'some', '形', 'いくつかの、いくらかの', 'I have [some] questions for you. Personal ones.', '君に{いくつか}質問がある。個人的なやつ。', '個人的な質問、とは。（ペンを持つ手がふるえる）'),
+  /* ---- 第2章 第5話 雨の日曜、二本の傘 ---- */
+  W('2-5', 'go', '動', '行く', 'Where do you want to [go] on Sunday?', '日曜日、どこに{行き}たい？', '行き先を本人に聞くタイプ。'),
+  W('2-5', 'like', '動', '好きだ、好む', 'I [like] your voice.', '君の声が{好き}だ。', '声。顔でも性格でもなく、声。こだわりが深い。'),
+  W('2-5', 'buy', '動', '買う', 'I [bought] the same pen as yours.', '君と同じペンを{買った}。', 'おそろいは、こっそり始まる。'),
+  W('2-5', 'eat', '動', '食べる', "Let's [eat] lunch together on the roof.", '屋上で、一緒にお昼を{食べよう}。', '屋上ランチ。少女漫画の聖地。'),
+  W('2-5', 'enjoy', '動', '楽しむ', 'I [enjoyed] the rainy day with you.', '君といた雨の日を{楽しんだ}。', '雨の日を楽しめる人とは、一生やっていける。'),
+  W('2-5', 'take', '動', '取る、（写真を）撮る、連れて行く', 'Can I [take] a picture with you?', '一緒に写真を{撮って}もいい？', '「一緒に」が本題。'),
+  W('2-5', 'make', '動', '作る、（計画を）立てる', 'I [made] lunch for two.', '二人分のお昼を{作った}。', '「作りすぎた」と言い訳する準備はできている。'),
+  W('2-5', 'use', '動', '使う', 'You can [use] my pen. Keep it.', '僕のペン、{使って}いいよ。返さなくていい。', '返さなくていい＝持っていてほしい。'),
+  W('2-5', 'play', '動', '（スポーツを）する、遊ぶ、演奏する', 'He was [playing] soccer in the rain.', '彼は雨の中で、サッカーを{していた}。', '雨のサッカー部。濡れた髪。……眼鏡が曇るほど見ていた。'),
+  W('2-5', 'more', '副', 'もっと、より多くの', 'I want to know [more] about you.', '君のことを、{もっと}知りたい。', '告白ではない。まだ。'),
+  /* ---- 第2章 第6話 先に助けたのは ---- */
+  W('2-6', 'because', '接', '〜だから、〜なので', 'I came [because] you called me.', '君が呼んだ{から}、来た。', '理由が一つしかない男。'),
+  W('2-6', 'if', '接', 'もし〜なら', "[If] it rains tomorrow, let's study together.", '{もし}明日雨なら、一緒に勉強しよう。', '晴れても一緒に勉強する。知ってる。'),
+  W('2-6', 'also', '副', '〜もまた、さらに', 'I [also] like the rain now.', '僕{も}、今は雨が好き。', '「も」の一文字に、すべてが詰まっている。'),
+  W('2-6', 'tell', '動', '伝える、言う、教える', '[Tell] me the truth.', '本当のことを{言って}。', '真実を求める眼鏡。圧がすごい。'),
+  W('2-6', 'help', '動', '助ける、手伝う', 'Can you [help] me with this question?', 'この問題、{手伝って}くれる？', '分かっているのに聞いている可能性。'),
+  W('2-6', 'other', '形', 'ほかの', "I don't need [other] friends.", '{ほかの}友だちは、いらない。', '重い。でも、それがいい。'),
+  W('2-6', 'family', '名', '家族', 'My [family] wants to meet you.', '僕の{家族}が、君に会いたがってる。', '展開が早い。三者面談より早い。'),
+  W('2-6', 'special', '形', '特別な', "This seat is [special]. It's only for you.", 'この席は{特別}なんだ。君専用。', '図書室の座席指定制度、勝手に導入。'),
+  W('2-6', 'idea', '名', '考え、アイデア', "I have a good [idea]. Let's study at my house.", 'いい{考え}がある。僕の家で勉強しよう。', 'いいアイデア（自分にとって）。'),
+  W('2-6', 'interest', '名', '興味（interested＝興味がある）', "I'm [interested] in you. ...In your English, I mean.", '君に{興味}がある。……君の英語に、ってこと。', '言い直しが遅い。全員聞いた。'),
+  /* ---- 第2章 第7話 期末テストの朝 ---- */
+  W('2-7', 'today', '名', '今日', '[Today], I walked to school with him.', '{今日}、彼と一緒に学校まで歩いた。', '日記の書き出しが全部「今日、彼と」になる現象。'),
+  W('2-7', 'time', '名', '時間、〜回', 'I lose track of [time] when I am with you.', '君といると、{時間}を忘れる。', '時計が仕事をしない現象。'),
+  W('2-7', 'before', '前', '〜の前に', 'He always waits for me [before] class.', '授業の{前に}、彼はいつも僕を待っている。', '早く来る理由が、授業ではない。'),
+  W('2-7', 'first', '形', '最初の、一番目の', 'You were my [first] friend in Japan.', '君は、日本で{最初の}友だちだった。', '「最初の」は、最後まで特別。'),
+  W('2-7', 'look', '動', '見る（look at）、〜に見える', "Don't [look] at me like that.", 'そんなふうに{見ない}で。', 'どんなふうに見られていたのか、詳しく。'),
+  W('2-7', 'right', '形', '正しい、右の', 'You were [right]. I was wrong.', '君が{正しかった}。僕が間違ってた。', '素直に謝れる眼鏡。好感度が上がる音がした。'),
+  W('2-7', 'now', '副', '今', "Where are you [now]? I'm waiting.", '{今}どこ？ 待ってるんだけど。', '既読がつくまでの三分間。'),
+  W('2-7', 'then', '副', 'それから、そのとき', 'We studied, and [then] we walked home.', '僕らは勉強して、{それから}一緒に帰った。', '「それから」が毎日ある幸せ。'),
+  W('2-7', 'find', '動', '見つける、分かる', 'I [found] your notebook under my desk.', '僕の机の下で、君のノートを{見つけた}。', '中を見たかどうかは、永遠の謎。'),
+  W('2-7', 'way', '名', '道、方法', "Is this the [way] to the library? ...I know. I just wanted to talk.", 'これが図書室への{道}？ ……知ってる。話したかっただけ。', '道を聞くふりの会話。古典的で、尊い。'),
+  /* ---- 第2章 第8話 六十二点 ---- */
+  W('2-8', 'get', '動', '手に入れる、〜になる、着く', 'I [got] a message from him at midnight.', '真夜中に、彼からメッセージを{もらった}。', '真夜中のメッセージ。中身は「ねむい」だけ。それがいい。'),
+  W('2-8', 'than', '接', '〜よりも', 'You are taller [than] me now.', '今は、君のほうが僕{より}背が高い。', '成長期の逆転劇。見上げる角度が変わる。'),
+  W('2-8', 'as', '前', '〜として、〜のように', "I'm here [as] your friend. ...For now.", '僕は友だち{として}ここにいる。……今のところは。', '「今のところは」、三回目。'),
+  W('2-8', 'well', '副', '上手に、よく', 'You sang very [well] today.', '今日の君、すごく{上手に}歌ってた。', '音楽の授業まで観測している。'),
+  W('2-8', 'great', '形', 'すばらしい、偉大な', "That's a [great] idea. Let's do it together.", 'それは{すばらしい}考えだ。一緒にやろう。', '何でも「一緒に」がつく。'),
+  W('2-8', 'happy', '形', '幸せな、うれしい', "I'm [happy] when you smile.", '君が笑うと、僕は{うれしい}。', '直球。眼鏡は、たまに直球。'),
+  W('2-8', 'important', '形', '大切な、重要な', 'You are [important] to me.', '君は僕にとって{大切}だ。', '注意のついでではない、むき出しの「大事」。'),
+  W('2-8', 'thank', '動', '感謝する', '[Thank] you for waiting for me.', '待っていてくれて{ありがとう}。', '待つ人と、待たせて謝る人。役割分担。'),
+  W('2-8', 'hope', '動', '望む、願う', 'I [hope] we will be in the same class next year.', '来年も同じクラスだと{いいな}。', 'クラス替えの神に祈る季節。'),
+  W('2-8', 'lot', '名', 'たくさん（a lot of＝たくさんの）', 'We have a [lot] of things in common.', '僕らには、共通点が{たくさん}ある。', 'まず傘。次にペン。それから本。'),
+  /* ---- 第2章 第9話 外国から来た先生 ---- */
+  W('2-9', 'teacher', '名', '先生', 'Our [teacher] saw us together again.', '{先生}に、また一緒にいるところを見られた。', '先生は何も言わない。言わないのが、大人の優しさ。'),
+  W('2-9', 'foreign', '形', '外国の', 'He speaks a [foreign] language when he is nervous.', '彼は緊張すると、{外国の}言葉を話す。', '体質の説明として、もう定着した。'),
+  W('2-9', 'country', '名', '国、いなか', 'Which [country] do you want to visit with me?', '僕と、どの{国}に行きたい？', '「僕と」が前提になっている。'),
+  W('2-9', 'Japan', '名', '日本', 'I came to [Japan] in April.', '僕は四月に{日本}に来た。', '四月。すべてが始まった月。'),
+  W('2-9', 'Japanese', '名', '日本語、日本の', 'Teach me [Japanese] slang. ...For my studies.', '{日本語}のスラングを教えて。……勉強のために。', '覚えたい言葉は「やばい」と「尊い」。'),
+  W('2-9', 'English', '名', '英語、イギリスの', "I'll help you with [English] every day.", '毎日、{英語}を手伝うよ。', '毎日。英語は口実。いや、英語もちゃんとやって。'),
+  W('2-9', 'visit', '動', '訪ねる、訪れる', 'Can I [visit] your house this weekend?', '今週末、君の家に{行って}もいい？', 'お宅訪問。ご家族へのあいさつの練習が始まる。'),
+  W('2-9', 'experience', '名', '経験', 'Sharing an umbrella was a new [experience] for me.', '傘を分け合うのは、僕には新しい{経験}だった。', 'ロンドンでは傘をささない人が多いらしい。だから、初めて。'),
+  W('2-9', 'live', '動', '住む、生きる', "I [live] near your house. ...It's just a coincidence.", '僕、君の家の近くに{住んでる}。……偶然だけど。', '偶然かどうかは、家族の転勤先の決め方による。'),
+  W('2-9', 'different', '形', '違った、いろいろな', 'You are [different] from other people.', '君は、ほかの人とは{違う}。', '「違う」は、この世界で最上級のほめ言葉。'),
+  /* ---- 第2章 第10話 伴奏者と指揮者 ---- */
+  W('2-10', 'sound', '名', '音、〜に聞こえる', "That [sounds] good. Let's go together.", 'それ、よさそうに{聞こえる}。一緒に行こう。', '誘いの返事が早い。準備していた説。'),
+  W('2-10', 'hear', '動', '聞こえる、聞く', 'I can [hear] your heartbeat. ...Just kidding.', '君の心臓の音が{聞こえる}。……冗談だよ。', '冗談じゃない可能性について、検討を要する。'),
+  W('2-10', 'choose', '動', '選ぶ', 'I [chose] the seat next to you again.', 'また君の隣の席を{選んだ}。', '席替えの自由度が高い図書室。'),
+  W('2-10', 'watch', '動', '（じっと）見る', 'I was [watching] your game from the window.', '窓から、君の試合を{見ていた}。', '定点観測、ついに認める。'),
+  W('2-10', 'picture', '名', '写真、絵', 'Can I keep this [picture]?', 'この{写真}、持っててもいい？', '待ち受けにする気だ。'),
+  W('2-10', 'all', '形', 'すべての、全部', 'I read [all] of your messages.', '君のメッセージは、{全部}読んだ。', '既読スルーではなく、既読熟読。'),
+  W('2-10', 'only', '形', 'ただ一つの、〜だけ', 'You are the [only] one who calls me by my first name.', '僕を下の名前で呼ぶのは、君{だけ}だ。', '「だけ」の重み、一トン。'),
+  W('2-10', 'too', '副', '〜も、〜すぎる', 'I like you [too]. ...As a friend.', '僕{も}君が好きだよ。……友だちとして。', '「友だちとして」の付け足しの速さ、0.5秒。'),
+  W('2-10', 'kind', '形', '親切な、（名詞）種類', 'You are [kind] to everyone. That makes me a little sad.', '君はみんなに{やさしい}。それが、ちょっとさびしい。', 'やさしさの独占を望む。正直でよろしい。'),
+  W('2-10', 'next', '形', '次の、隣の（next to）', 'Sit [next] to me. Always.', 'いつも、僕の{隣}に座って。', '「いつも」まで付ける。座席指定、恒久化。'),
+  /* ---- 第2章 第11話 三つの理由 ---- */
+  W('2-11', 'one', '名', '1、一つ', 'We have only [one] umbrella. Come here.', '傘は{一}本しかない。こっちおいで。', '一本しかない、は嘘の可能性。カバンの中に折りたたみ。'),
+  W('2-11', 'two', '名', '2、二つ', '[Two] cups of hot chocolate, please.', 'ホットココアを{二つ}ください。', 'ストローは一つ……ではない。安心してください。'),
+  W('2-11', 'three', '名', '3、三つ', 'I waited for [three] hours. ...It was OK.', '{三}時間待った。……大丈夫だった。', '三時間を「大丈夫」で済ませる男。'),
+  W('2-11', 'thing', '名', 'もの、こと', 'There is one [thing] I want to tell you.', '君に言いたい{こと}が、一つある。', 'ここで言わずに、章をまたぐタイプ。'),
+  W('2-11', 'example', '名', '例（for example＝例えば）', 'For [example], I like the way you laugh.', '{例えば}、君の笑い方が好き。', '例が具体的すぎて、本題が透けている。'),
+  W('2-11', 'however', '副', 'しかし、けれども', 'I was tired. [However], I waited for him.', '疲れていた。{しかし}、僕は彼を待った。', '疲れより、待つことが勝つ。'),
+  W('2-11', 'life', '名', '生活、人生、命', 'My [life] changed in the library.', '僕の{人生}は、図書室で変わった。', '図書室の効能：人生が変わる。'),
+  W('2-11', 'information', '名', '情報', 'I need more [information] about you.', '君についての{情報}が、もっと必要だ。', 'データ収集型の恋。'),
+  W('2-11', 'last', '形', '最後の、この前の（last night＝昨夜）', '[Last] night, I dreamed about you.', '{ゆうべ}、君の夢を見た。', '夢の内容は、言わない。（顔が赤い）'),
+  W('2-11', 'work', '動', '働く、取り組む、（名詞）仕事', 'You [worked] so hard. Rest on my shoulder.', '君は本当に{がんばった}。僕の肩で休んで。', '肩を貸す。それだけで、一枚の絵になる。'),
+  /* ---- 第2章 第12話 七月の約束 ---- */
+  W('2-12', 'month', '名', '（1か）月', 'We met three [months] ago.', '僕らは、三{か月}前に出会った。', '記念日を数えている。'),
+  W('2-12', 'week', '名', '週', 'I see you five days a [week]. It is not enough.', '{週}に五日会っている。足りない。', '土日も会いたい。とは言わない。'),
+  W('2-12', 'day', '名', '日、昼', 'Every [day] with you is special.', '君といる毎{日}が特別だ。', '今日も特別、明日も特別。インフレしない特別。'),
+  W('2-12', 'year', '名', '年', "Let's go to the summer festival again next [year].", '来{年}も、夏祭りに行こう。', '二人とも合格する前提の約束。'),
+  W('2-12', 'give', '動', '与える、渡す', "I'll [give] you my umbrella. Don't argue.", '傘、{あげる}。文句言わないで。', '自分はぬれて帰るタイプ。'),
+  W('2-12', 'ask', '動', 'たずねる、頼む', "Don't [ask] me why. Just stay here.", '理由は{聞か}ないで。ただ、ここにいて。', '理由は、みんな知っている。'),
+  W('2-12', 'please', '副', 'どうぞ、お願いします', "[Please] don't go to another school.", '{お願いだから}、ほかの学校に行かないで。', '志望校の相談に見せかけた、何か。'),
+  W('2-12', 'let', '動', '〜させる（let\'s＝〜しよう）', '[Let] me carry your bag.', '君のかばん、僕に持た{せて}。', 'かばん持ちを志願する眼鏡。'),
+  W('2-12', 'friend', '名', '友だち', 'We are just [friends]. ...Right?', '僕らは、ただの{友だち}。……だよね？', '「だよね？」が全然「だよね」じゃない。'),
+  W('2-12', 'town', '名', '町', 'This [town] is small, but I like it.', 'この{町}は小さい。でも、好きだ。', '好きなのは町か、町にいる誰かか。'),
+];
+const WMAP = Object.fromEntries(WORDS.map(w => [w.id, w]));
+/** 意味が近くて、選択肢に並べると答えが2つになる組（並べない） */
+const NEAR = [['hard', 'difficult'], ['learn', 'study'], ['learn', 'remember'], ['word', 'language'], ['letter', 'message'], ['phone', 'call'], ['read', 'study']];
+
+const N = t => ({ k: 'n', t }), V = t => ({ k: 'v', t }), Y = t => ({ k: 's', w: 'yota', t });
+const E = (en, ja, w = 'toru', lb) => ({ k: 'e', w, en, ja, lb });
+const GATE = { k: 'gate' };
+
+const CHAPTERS = [
+  { id: 'c1', no: 1, month: '4月', title: '図書室の帰国子女', grammar: 'be動詞・一般動詞・命令文・can', test: true,
+    eps: [
+      { id: '1-1', title: '図書室の転校生', lines: [
+        N('四月。中学三年の春。'),
+        N('あなたは図書委員になった。'),
+        V('理由はひとつ。図書室は、尊いものが生まれる場所だから。異論は認めない。'),
+        N('放課後。窓際の席に、見慣れない男子が座っていた。'),
+        N('眼鏡。洋書。窓からさしこむ光。'),
+        V('え、絵画？ 美術館の方ですか？'),
+        N('バン！ と扉が開いた。'),
+        Y('すんませーん！ 英語の参考書ってどこっすか！ 俺、このままだと高校行けないって担任に言われて！'),
+        N('窓際の男子が、ゆっくり顔を上げた。'),
+        E('Be [quiet]. This is a [library].', '{quiet|静かに}して。ここは{library|図書室}だ。'),
+        Y('……へ？'),
+        Y('なあ図書委員！ あいつ今なんて言った!?'),
+        N('あなたは答えられなかった。英語が、分からない。'),
+        V('待って。今の、絶対いいセリフだった。分かりたい。訳したい。'),
+        N('――この日、あなたは英単語を覚えることにした。二人のセリフを、ひとつ残らず訳すために。'),
+        GATE,
+        N('あなたは陽太に耳打ちした。「静かにして。ここは図書室だ――って」'),
+        Y('うわ、ごめん！ ……って英語!? お前、帰国子女ってやつ？'),
+        E("I'm a [new] [student]. I came from London.", '{new|新しく}来た{student|生徒}だよ。ロンドンから来た。'),
+        Y('3組の日向陽太！ よろしくな！ で、お前の名前は？'),
+        E('My [name] is Toru. ...Nice to [meet] you.', '僕の{name|名前}は透。……{meet|会え}てうれしい。'),
+        V('小さい声で「会えてうれしい」。はい、好き。'),
+        Y('トオルな！ なあ、英語教えてくれよ。俺、星陵高校に行きたいんだ。'),
+        N('透は、読んでいた本を閉じた。'),
+        E("...This [seat] is free. Sit. Let's [read] this [book] together.", '……この{seat|席}、空いてる。座って。この{book|本}、一緒に{read|読も}う。'),
+        N('窓際の席に、並んだ二つの影。'),
+        V('図書委員になって、よかった。'),
+        N('陽太が辞書を取りに立ったあと。透が、小さくつぶやいた。'),
+        E('...I see him from this [window] every day.', '……毎日、この{window|窓}から見てる。'),
+        V('窓。……グラウンドが見える、あの窓。サッカー部の。'),
+        V('え、待って。待って？'),
+      ] },
+      { id: '1-2', title: '緊張すると英語になる', lines: [
+        N('次の日の放課後。図書室の奥のテーブル。'),
+        N('陽太が英語の問題集とにらめっこしている。その隣に、透。'),
+        Y('なあトオル、この問題わかんねえ。'),
+        E("It's [easy]. Read the [question] again.", '{easy|簡単}だよ。{question|問題}をもう一回読んで。'),
+        Y('だから英語で言うなって！'),
+        N('透は、少しだけ困った顔をした。'),
+        E("Sorry. When I'm nervous, I [speak] English.", 'ごめん。緊張すると、英語を{speak|話し}ちゃうんだ。'),
+        V('緊張すると英語になる？ 今、緊張してるってこと？ 何に？ 誰に？'),
+        Y('なあ図書委員、今のは!?'),
+        N('……まだ、訳せない。'),
+        GATE,
+        N('あなたは訳した。「緊張すると、英語になっちゃうんだって」'),
+        Y('緊張？ 俺に？ なんで？'),
+        N('透は答えない。耳が赤い。'),
+        E("This [word] is [difficult]. I'll [teach] you.", 'この{word|単語}は{difficult|難しい}。僕が{teach|教える}よ。'),
+        Y('話そらしたな!? ……まあいいや、教えて。'),
+        N('二十分後。'),
+        E('You [learn] fast. ...I [understand] why everyone likes you.', '君は{learn|覚える}のが早いね。……みんなが君を好きな理由、{understand|分かる}気がする。'),
+        V('みんなが、君を、好きな理由。……語彙力が消えた。せっかく覚えたのに。'),
+        Y('今なんて？ 褒めた？ 褒めたよな今！'),
+        E("No. That's my [answer].", '違う。それが僕の{answer|答え}。'),
+        V('照れかくしの「No」。今日の供給、多くない？'),
+        Y('お前、英語ペラペラでいいよなー。'),
+        E("It's just a [language]. Some feelings are hard to say in any language.", 'ただの{language|言語}だよ。……どの言葉でも、言いにくい気持ちはある。'),
+        V('言いにくい気持ち。言いにくい、気持ち！'),
+      ] },
+      { id: '1-3', title: '閉館まで待つ人', lines: [
+        N('四月の終わり。'),
+        Y('ごめんトオル！ 今日は部活あるから、勉強なしで！'),
+        N('陽太は走っていった。グラウンドへ。'),
+        N('透は本を開いたまま、ページをめくらない。'),
+        N('一時間。二時間。閉館の時間になった。'),
+        N('あなたは声をかけた。「あの、そろそろ閉館です……」'),
+        E("I'll [wait]. He will come [after] practice.", '{wait|待つ}よ。あいつは練習の{after|あと}に来るから。'),
+        V('来るって約束、してないよね？ 待つの？ 待っちゃうの？'),
+        GATE,
+        N('そのとき、扉が開いた。泥だらけのユニフォーム。'),
+        Y('はぁ、はぁ……まだいた！ 窓から、図書室の電気が見えたから！'),
+        V('お互い、窓から見てる。カウンターの下で、拳をにぎった。'),
+        E("You're [late]. ...Let's [walk] [home] [together].", '{late|遅い}よ。……{together|一緒に}{home|家}まで{walk|歩こう}。'),
+        Y('おう！ ……って今のは俺でも分かったぞ。「一緒に帰ろう」だろ！'),
+        N('透が、少しだけ笑った。'),
+        E('Then, [promise] me. [Every] day after practice, we study here. Until we [finish] this book.', 'じゃあ、{promise|約束}して。{every|毎}日、練習のあとはここで勉強する。この本を{finish|終える}まで。'),
+        Y('毎日!? ……いいぜ。約束な！'),
+        E('See you [tomorrow], Yota.', 'また{tomorrow|明日}、陽太。'),
+        V('初めて名前を呼んだ。下の名前で。'),
+        N('あなたは静かに、「閉館」の札を裏返した。'),
+      ] },
+      { id: '1-4', title: '同じ高校へ', lines: [
+        N('五月の終わり。実力テストが返ってきた。'),
+        Y('英語……十八点。'),
+        N('陽太が机に突っぷした。担任には「星陵は厳しい」と言われたらしい。'),
+        Y('なあトオル。お前はどこ受けんの？'),
+        E('I [want] to go to the [same] school as you.', '君と{same|同じ}学校に{want|行きたい}。'),
+        Y('……ごめん、英語だとわかんねえ。'),
+        V('お願い陽太くん、今だけは分かって！ いや分かるな！ いや、やっぱり分かって！'),
+        GATE,
+        N('あなたはそっと、メモを陽太のほうへすべらせた。訳を書いて。'),
+        Y('「君と同じ学校に行きたい」……。'),
+        Y('お、お前、もっと上の高校行けるだろ!?'),
+        E("I don't care. I made a plan for my [future]. You are in it.", 'どうでもいい。僕は{future|将来}の計画を立てた。そこに君がいる。'),
+        V('将来の計画に組みこまれている。重い。最高。'),
+        Y('でも俺、十八点だぞ……。'),
+        E('Then [study] [hard]. [Try] your [best]. I [believe] in you.', 'なら、{hard|一生けんめい}{study|勉強し}て。{best|最善}を{try|尽くし}て。僕は君を{believe|信じてる}。'),
+        Y('……お前に「信じてる」とか言われたら、やるしかねーじゃん。'),
+        E('We have only one [chance]. Next March.', '{chance|チャンス}は一度だけ。来年の三月。'),
+        Y('よし！ 俺の夢は、お前と星陵に行くことだ！'),
+        E("That's my [dream], too.", 'それは僕の{dream|夢}でもある。'),
+        N('夕暮れの図書室。重なった、二つの夢。'),
+        V('第一章、完。……いや、まだだ。章末テストがある。受からないと、続きが読めない。'),
+      ] },
+    ],
+    bonus: { title: 'おまけ：透の英語日記', lines: [
+      N('図書室の忘れ物。紺色のノート。表紙に「DIARY」。'),
+      V('読んではいけない。分かっている。でも、もう単語は覚えてしまった。'),
+      E('April 8. I [met|meet] a loud boy in the [library].', '4月8日。{library|図書室}で、うるさい男子に{meet|出会った}。', 'note', '日記'),
+      E("He can't [read] English well. But he [tries|try] [hard].", '彼は英語がうまく{read|読め}ない。でも、{hard|一生けんめい}{try|がんばる}。', 'note', '日記'),
+      E('He calls my [name] like a song.', '彼は僕の{name|名前}を、歌みたいに呼ぶ。', 'note', '日記'),
+      E('I [want] to see his smile [every] day.', '{every|毎}日、彼の笑顔が{want|見たい}。', 'note', '日記'),
+      E("This is a secret. Don't [read] this, Yota.", 'これは秘密。{read|読む}なよ、陽太。', 'note', '日記'),
+      V('……読んでしまった。ごめん、透。そして、ありがとう。'),
+      N('あなたはノートをそっと、窓際の席に戻した。'),
+    ] },
+  },
+  { id: 'c2', no: 2, month: '6月', title: '雨と傘と単語帳', grammar: '現在進行形・過去形', test: true,
+    eps: [
+      { id: '2-1', title: '相合傘', lines: [
+        N('六月。放課後、急な雨。'),
+        N('昇降口で、陽太が空を見上げていた。'),
+        Y('うわ、傘わすれた……。'),
+        N('その後ろに、紺色の傘を持った透。'),
+        E('You always [forget] your [umbrella].', '君はいつも{umbrella|傘}を{forget|忘れる}ね。'),
+        Y('なんで「いつも」って知ってんの？'),
+        N('透は答えずに、傘を広げた。'),
+        E('Come [under] my umbrella. We can [share].', '僕の傘の{under|下}においで。{share|分け合え}ばいい。'),
+        V('相合傘。出た。古来より伝わる、あの儀式。'),
+        N('あなたは図書室の窓から、その一部始終を見ていた。（たまたまです）'),
+        GATE,
+        N('一本の傘。二人の肩。'),
+        Y('お前、肩ぬれてんじゃん。'),
+        E("I'm fine. You'll get [wet]. [Stand] [close] to me.", '平気。君が{wet|ぬれる}。僕の{close|近く}に{stand|立って}。'),
+        V('近くに立って。近くに。ち、か、く、に。'),
+        Y('……お前の手、冷たいな。'),
+        E("It's [cold] today. But...", '今日は{cold|寒い}から。でも……'),
+        E('...your hand is [warm].', '……君の手は{warm|あたたかい}。'),
+        V('待って、いつ手が触れたの。ここからは見えなかった。一生の不覚。'),
+        E('I like the [rain]. Now I like it more.', '{rain|雨}は好きだ。今は、もっと好き。'),
+        N('雨の音が、少しだけ大きくなった。'),
+      ] },
+      { id: '2-2', title: '手作りの単語帳', lines: [
+        N('期末テストの前。透が一冊のノートを差し出した。'),
+        E('I made this [notebook] for you. [Remember] all the words.', '君のために、この{notebook|ノート}を作った。単語を全部{remember|覚えて}。'),
+        Y('手作りの単語帳!? すげえ！ ……で、なんて？'),
+        V('手作りの単語帳。それはもう、ラブレターと同じ成分でできている。'),
+        E("And... don't open the last [page] yet.", 'それと……最後の{page|ページ}は、まだ開けないで。'),
+        V('開けるなと言われたら開けたくなる。人類の性。'),
+        GATE,
+        Y('よーし、書いて覚えるぞ！'),
+        E('[Write] each word three times. [Copy] my sentences.', '一語ずつ三回{write|書いて}。僕の例文を{copy|写して}。'),
+        N('陽太が書く。透が、それを横で見ている。'),
+        E("That's a [mistake]. ...Be [careful].", 'そこ、{mistake|間違い}。……{careful|気をつけて}。'),
+        Y('え、どこ？'),
+        N('透が、陽太の手の上からペンを動かした。'),
+        V('手の上から！ ペンを！ 動かした！（このまま図書室の壁になる）'),
+        E("Now it's [correct]. Let me [check] it again.", 'これで{correct|正しい}。もう一回{check|確かめ}させて。'),
+        N('その夜。陽太は、単語帳の最後のページを開いてしまった。'),
+        E('Yota, you are a [letter] I want to read again and again.', '陽太へ。君は、何度でも読み返したい{letter|手紙}みたいな人だ。', 'note', '最後のページ'),
+        Y('……読めねえ。でも、なんか、すげえ大事なこと書いてある気がする。'),
+        V('読めるよ。私は読める。今日、覚えたから。……尊い。'),
+      ] },
+      { id: '2-3', title: '既読、つかない', lines: [
+        N('日曜日の夜。あなたのスマホが鳴った。陽太からだ。（図書委員の連絡網で、つながっている）'),
+        Y('『図書委員、助けて。トオルに「最後のページ何て書いたの？」って送ったら、英語で返ってきた』'),
+        N('転送されてきたメッセージ。'),
+        E("Don't [worry]. I'm not angry. I just [miss] you.", '{worry|心配}しないで。怒ってない。ただ、君がいなくて{miss|さみしい}だけ。'),
+        V('日曜に会えないだけで「さみしい」。一日。たった一日。'),
+        Y('『なんて？ 怒ってる？？』'),
+        GATE,
+        N('あなたは訳を送った。既読がつく。'),
+        N('五分後。陽太から一言。『電話する』'),
+        N('――ここから先を、あなたは見ていない。でも次の日、図書室で二人から聞き出した。'),
+        E('He [called|call] me at ten. I was so [glad].', '十時に、彼が{call|電話をくれ}た。すごく{glad|うれしかった}。'),
+        Y('電話で「アイ・ミス・ユー・トゥー」って言ってみたらさ、トオル、黙っちゃって。'),
+        E("I couldn't [reply]. I was [smiling|smile] too much.", '{reply|返事}ができなかった。{smile|にやけ}すぎて。'),
+        E("[Sorry]. Next time, I'll [send] my [message] in Japanese.", '{sorry|ごめん}。次は日本語で{message|メッセージ}を{send|送る}よ。'),
+        Y('いや、英語でいいよ。……覚えるから。お前の言葉、全部。'),
+        V('「お前の言葉、全部覚える」。それ、このアプリの存在意義。'),
+        E("...Then I'll keep my [phone] on. Always.", '……じゃあ、{phone|スマホ}の電源、ずっと入れておく。'),
+        N('――そして、月曜日。'),
+        V('平和な一週間が始まる。……はずだった。'),
+      ] },
+      /* ---- ここから「入試の出る順」（北海道 R6〜R8 に3年とも出た語）で単語を選んでいる ---- */
+      { id: '2-4', title: 'うわさ', lines: [
+        N('月曜日。教室がざわついていた。'),
+        N('黒板の前で、クラスの女子たちがひそひそ話している。'),
+        V('……聞こえる。「日向くんと柊くん、一本の傘に入ってたらしいよ」。情報網、早すぎない？'),
+        N('昼休み。図書室に、透がいつもより早く来た。'),
+        Y('なあトオル、なんか今日、みんなに見られてねえ？'),
+        E('[Many] [people] are [talking|talk] [about] us.', '{many|たくさんの}{people|人}が、僕たち{about|について}{talk|話して}る。'),
+        Y('は？ なんで？'),
+        E('They [saw|see] us under one umbrella. ...I [think].', '僕たちが一本の傘に入ってるのを、{see|見た}らしい。……と{think|思う}。'),
+        V('相合傘、目撃されていた。……私だけの秘密だと思ってたのに。'),
+        GATE,
+        N('あなたは、ふたりの会話をそっと訳して、メモに書いた。'),
+        Y('うわさかー。まあ、別にいいけど。'),
+        E("I [know] what they say. '[Some] boys in our [school] are too close.'", '何て言われてるか、{know|知ってる}。「この{school|学校}の{some|一部の}男子は、近すぎる」って。'),
+        Y('近すぎる？ 俺ら、普通に勉強してるだけじゃん。'),
+        N('透は、少しだけ目をそらした。'),
+        E("...[Good]. Then let's keep studying. Here, every day.", '……{good|よかった}。じゃあ、勉強を続けよう。ここで、毎日。'),
+        V('「よかった」の前の、あの間。あの間に、何が入っていたのか。'),
+        Y('……あ、でもさ。近すぎるって言われても、俺、トオルの隣がいちばん集中できるんだよな。'),
+        N('透の耳が、また赤くなった。'),
+        E("...Don't [talk] like that in the library.", '……図書室で、そういうことを{talk|言わ}ないで。'),
+        V('今日も平和に、尊い。うわさの出どころは、たぶん私じゃない。たぶん。'),
+      ] },
+      { id: '2-5', title: '雨の日曜、二本の傘', lines: [
+        N('次の日曜日。また雨。'),
+        N('なぜか、あなたは駅前の本屋にいた。参考書を買いに来ただけだ。本当に。'),
+        N('ガラスの向こうに、見覚えのある二つの傘。紺色と、オレンジ。'),
+        V('待って。これは、いわゆる……休日の……。'),
+        Y('トオル、ここの参考書コーナーでかいな！'),
+        E("Let's [buy] the same book. Then we can [use] it together.", '同じ本を{buy|買おう}。そうすれば、一緒に{use|使える}。'),
+        Y('同じ本、二冊？ 一冊でよくね？'),
+        E("I [like] to have the same one. ...That's all.", 'おそろいが{like|好き}なんだ。……それだけ。'),
+        V('「それだけ」は、それだけじゃないときに使う言葉。'),
+        GATE,
+        N('本屋のあと、ふたりはカフェに入った。あなたは、なぜか隣の席にいた。偶然です。'),
+        Y('腹へった！ なに食う？'),
+        N('陽太は、パンケーキを二つ頼んだ。'),
+        E('Two? Do you want to [eat] [more]?', '二つ？ {more|もっと}{eat|食べ}たいの？'),
+        Y('違うって。一個はお前の。半分こしようぜ。'),
+        V('半分こ。相合傘、片耳イヤホン、半分こ。「分け合う」の三段活用。'),
+        E('...Did you [make] this plan?', '……この計画、君が{make|立てた}の？'),
+        Y('おう。昨日の夜、「雨でも楽しめる場所」って調べた。'),
+        E("I [enjoyed|enjoy] today. Let's [go] somewhere again.", '今日は{enjoy|楽しかった}。また、どこかへ{go|行こう}。'),
+        Y('次は晴れたら、公園でサッカーな。お前、キーパー。'),
+        E("I don't [play] soccer. ...But I'll try.", 'サッカーは{play|し}ない。……でも、やってみる。'),
+        N('店を出るとき、陽太がスマホを構えた。'),
+        Y('記念に一枚な！'),
+        E('Wait. [Take] it again. I closed my eyes.', '待って。もう一回{take|撮って}。目をつぶった。'),
+        V('撮り直しを求める男子。写りを気にしているのではない。たぶん、ちゃんと隣に写りたい。'),
+      ] },
+      { id: '2-6', title: '先に助けたのは', lines: [
+        N('六月の終わり。期末テストの前の日。図書室。'),
+        Y('なあトオル。なんでいつも、俺のこと手伝ってくれんの？'),
+        N('透は、ページをめくる手を止めた。'),
+        E('[Because] you [helped|help] me first.', '君が先に、僕を{help|助けて}くれた{because|から}。'),
+        Y('俺が？ いつ？'),
+        E("When I came here, I didn't have any [other] friends. You [told|tell] me your name first.", 'ここに来たとき、僕には{other|ほかに}友だちがいなかった。君が先に、名前を{tell|教えて}くれた。'),
+        V('四月の図書室。「3組の日向陽太！」……あれが、始まり。'),
+        GATE,
+        Y('そんなの、たいしたことじゃねーよ。'),
+        E('It was [special] to me.', '僕にとっては、{special|特別}だった。'),
+        N('沈黙。窓の外で、雨が上がった。'),
+        Y('……なあ。お前、なんで日本に来たの？'),
+        E("My [family] moved here [because] of my father's work.", '父の仕事の{because|ために}、{family|家族}でこっちに来た。'),
+        E("At first, I had no [interest] in Japan. But now, I'm [interested|interest] in many things here.", '最初は、日本に{interest|興味}がなかった。でも今は、ここのたくさんのことに{interest|興味}がある。'),
+        Y('たくさんのこと？ 例えば？'),
+        E('...[If] I tell you, you will laugh.', '……{if|もし}言ったら、君は笑う。'),
+        Y('笑わねーって！'),
+        E("I [also] have an [idea]. Let's study for the test first.", '僕{also|にも}{idea|考え}がある。まず、テスト勉強をしよう。'),
+        V('はぐらかした。でも、「たくさんのこと」の一つ目は、たぶん今、目の前にいる。'),
+        Y('ちぇっ。……テスト終わったら、絶対言えよ！'),
+        N('――そして、テストの日がやってくる。'),
+        V('「たくさんのこと」の答えは、テストのあと。……私も、勉強しよう。'),
+      ] },
+      { id: '2-7', title: '期末テストの朝', lines: [
+        N('期末テストの朝。昇降口。'),
+        Y('やべえ……昨日の夜、単語帳を見てたら、気づいたら朝だった。'),
+        V('徹夜で単語帳。最後のページを何回読んだのかは、聞かないでおく。'),
+        N('透が、陽太の前に立った。'),
+        E('[Look] at me. ...You studied every day. You are ready [now].', 'こっちを{look|見て}。……君は毎日勉強した。{now|今}の君なら、大丈夫。'),
+        Y('……お、おう。'),
+        E("[Today] is not the end. It's the [first] step.", '{today|今日}は終わりじゃない。{first|最初}の一歩だ。'),
+        V('朝からこの供給。テストの前に、私の心がもたない。'),
+        GATE,
+        N('一時間目、英語。あなたは斜め後ろの席から、陽太の背中を見ていた。（たまたま、その席なだけです）'),
+        N('陽太の手が止まった。……そして、筆箱から何かを取り出した。'),
+        V('紙のしおり。英語で何か書いてある。……透の字だ。'),
+        E("If you can't [find] the answer, read the question again. [Then], take your [time].", '答えが{find|見つから}なかったら、問題をもう一回読んで。{then|それから}、{time|時間}をかけて。', 'note', 'しおり'),
+        E('You know the [way]. I [believe] in you.', '君は{way|やり方}を知ってる。僕は君を{believe|信じてる}。', 'note', 'しおり'),
+        N('陽太の背中が、まっすぐになった。'),
+        N('テストのあと。廊下。'),
+        Y('トオル！ あのしおり、いつ入れたんだよ！'),
+        E('...[Before] the test. When you were sleeping on your desk.', '……テストの{before|前}。君が机で寝てたとき。'),
+        Y('見てたのかよ！'),
+        E('Was I [right]? Could you [find] the answers?', '僕の言ったこと、{right|正しかった}？ 答え、{find|見つけ}られた？'),
+        Y('……うん。たぶん、今までで一番できた。'),
+        V('結果は来週。でも、もう答えは出ている気がする。'),
+      ] },
+      { id: '2-8', title: '六十二点', lines: [
+        N('一週間後。英語のテストが返ってきた。'),
+        Y('……ろ、ろく、じゅう……'),
+        Y('六十二点！！！ トオル！ 六十二点！！'),
+        N('図書室に響く声。あなたは「静かに」の札を持ち上げかけて、やめた。'),
+        E("Sixty-two? You did [well]! That's much better [than] in April.", '六十二点？ {well|よく}やった！ 四月{than|より}ずっといい。'),
+        V('四月は十八点。三倍以上。愛の力……とは言わない。勉強の力。'),
+        Y('お前のおかげだよ。マジで。'),
+        E("No. You [got|get] it by yourself. I'm just [happy].", '違う。君が自分で{get|取った}んだ。僕はただ、{happy|うれしい}。'),
+        GATE,
+        Y('なあ、何か礼させてくれよ。'),
+        E("You don't have to. ...But if you want to [thank] me...", 'いいよ、そんなの。……でも、もし僕に{thank|お礼}をしたいなら……'),
+        N('透は、窓の外を見た。耳が赤い。'),
+        E("...Call me Toru [as] you always do. That's [important] to me.", '……いつもの{as|ように}「トオル」って呼んで。それが僕には{important|大事}なんだ。'),
+        V('お礼のハードルが低い。低すぎて、尊い。'),
+        Y('え、それだけ？ そんなのいくらでも呼ぶけど。トオル、トオル、トオル！'),
+        E('[Great]. ...But now you are too loud again.', '{great|最高}。……でも、また声が大きい。'),
+        Y('へへ。'),
+        E('I [hope] your next score will be higher. We still have a [lot] to study.', '次の点数が、もっと上がることを{hope|願ってる}。まだ{lot|たくさん}勉強することがある。'),
+        V('ふたりの勉強は、まだ続く。それが一番の朗報。'),
+      ] },
+      { id: '2-9', title: '外国から来た先生', lines: [
+        N('七月の初め。新しい ALT の先生が来た。'),
+        N('ローズ先生。カナダから来たらしい。明るくて、声が大きい。'),
+        E("Hi, everyone! I'm a new [English] [teacher]. I came from Canada.", 'みなさん、こんにちは！ 新しい{english|英語}の{teacher|先生}です。カナダから来ました。', 'alt'),
+        N('休み時間。ローズ先生が、透に話しかけた。'),
+        E('Your English is great! Did you [live] in a [foreign] [country]?', 'あなたの英語、すばらしいわね！ {foreign|外}{country|国}に{live|住んで}いたの？', 'alt'),
+        N('透とローズ先生が、英語で話しはじめた。速い。楽しそう。'),
+        N('陽太は、少し離れたところで、それを見ていた。'),
+        V('陽太くんが、見たことのない顔をしている。……これは。'),
+        GATE,
+        Y('……なあ、トオル。先生と何話してたの？'),
+        E('She asked about my [experience] in London. And why I came to [Japan].', 'ロンドンでの{experience|経験}のこと。それと、なんで{japan|日本}に来たのか。'),
+        Y('ふーん。……楽しそうだったな。英語で。'),
+        N('透が、陽太の顔をのぞきこんだ。'),
+        E('...Are you jealous?', '……やきもち？'),
+        Y('ち、ちげーよ！ 俺だけ英語わかんねーのが、ちょっと……'),
+        E("Then I'll [visit] your house and teach you. Every weekend.", 'じゃあ、君の家に{visit|行って}教える。毎週末。'),
+        V('話が飛んだ。やきもちの解決策が、家庭訪問。'),
+        E("And... I like speaking [Japanese] with you. It's [different].", 'それに……君と{japanese|日本語}で話すのが好きだ。ほかとは{different|違う}。'),
+        Y('……お前、ずるい。'),
+        V('「ずるい」。陽太くんの語彙から出た、今日いちばんの名言。'),
+      ] },
+      { id: '2-10', title: '伴奏者と指揮者', lines: [
+        N('七月。合唱コンクールの練習が始まった。'),
+        N('伴奏は、透。指揮は、なぜか陽太。'),
+        V('伴奏者と指揮者。曲のあいだ、ずっと目を合わせ続ける役。……決めたのは誰？ 天才？'),
+        N('練習のあと、音楽室。ピアノの前の透に、陽太が話しかけた。'),
+        Y('なあ、俺の指揮、どうだった？'),
+        E("Honestly? I couldn't [hear] the piano's [sound]. You were singing [too] loud.", '正直に言うと、ピアノの{sound|音}が{hear|聞こえ}なかった。君の歌声が、大き{too|すぎ}た。'),
+        Y('指揮者って歌っちゃダメなの！？'),
+        V('ダメです。でも、かわいいので不問。'),
+        GATE,
+        E('[Watch] my hands. When I play, you move your arms.', '僕の手を{watch|見て}。僕が弾くとき、君が腕を動かす。'),
+        N('ふたりで、もう一度。ピアノの音と陽太の腕が、少しずつ重なっていく。'),
+        V('呼吸が合っていく。……これはもう、合唱コンクールではない。ふたりの何かだ。'),
+        E('...Good. [All] of us can sing well [next] time.', '……いいね。{next|次}は、{all|みんな}でうまく歌える。'),
+        Y('トオル、ありがとな。お前、やさしいよな。'),
+        E("I'm not [kind] to everyone. ...[Only] to you.", 'みんなに{kind|やさしい}わけじゃない。……君に{only|だけ}。'),
+        N('沈黙。ピアノの上に、夕日。'),
+        Y('……写真撮っていい？ 今のお前。'),
+        E('Why? ...Fine. [Choose] a good angle.', 'なんで？ ……いいけど。いい角度を{choose|選んで}。'),
+        E('And send me that [picture] later.', 'あと、その{picture|写真}、あとで送って。'),
+        V('欲しいのか、その写真。……そういうことか。'),
+      ] },
+      { id: '2-11', title: '三つの理由', lines: [
+        N('七月の第二週。放課後の図書室。'),
+        Y('テスト終わったぞ。約束だ。「ここで興味があるたくさんのこと」、言え！'),
+        N('透は、本を閉じた。逃げられないと悟った顔。'),
+        E("...OK. I'll tell you [three] [things|thing].", '……わかった。{three|三つ}の{thing|こと}を言う。'),
+        V('三つ。数字で区切ってくるあたりが、帰国子女っぽい。'),
+        E('Number [one]. The rain in this town.', '{one|一つ}目。この町の雨。'),
+        Y('雨？'),
+        V('相合傘のことでは。'),
+        GATE,
+        E('Number [two]. The library after school. My [life] changed there.', '{two|二つ}目。放課後の図書室。僕の{life|人生}は、そこで変わった。'),
+        Y('図書室……？ 勉強好きだもんな。'),
+        V('違う。そうじゃない。陽太くん、そうじゃない。'),
+        E('And the [last] one...', 'そして、{last|最後}の一つは……'),
+        N('透が、陽太を見た。……そして、すぐに目をそらした。'),
+        E("...I need more [information]. I'll tell you someday.", '……まだ{information|情報}が足りない。いつか言う。'),
+        Y('なんだそれ！ ずりーぞ！'),
+        E('[However], I can give you an [example].', '{however|でも}、{example|例}なら一つあげられる。'),
+        Y('おう、何？'),
+        E('You [worked|work] hard for the test. I liked watching that.', '君はテストのために一生けんめい{work|がんばった}。それを見てるのが、好きだった。'),
+        Y('……え、それ例？ 例なの？'),
+        V('例です。三つ目の、いちばん大きなヒントです。……陽太くん、気づいて。'),
+      ] },
+      { id: '2-12', title: '七月の約束', lines: [
+        N('終業式まで、あと二週間。ホームルームで、体育祭の組分けが発表された。'),
+        Y('……俺、赤組。トオルは？'),
+        E('White. ...We are on different teams this [month].', '白。……{month|今月}は、別のチームだ。'),
+        V('赤と白。敵と味方。……体育祭は、恋の公式戦。'),
+        Y('マジかよー。……でも、お前、走るの遅そうだよな。'),
+        E('[Let] me show you. I run every [day] in the morning.', '{let|見せて}あげる。毎{day|日}、朝に走ってるんだ。'),
+        GATE,
+        Y('え、朝走ってんの？ どこ？'),
+        E('Around this [town]. Near the river.', 'この{town|町}を一周。川のそば。'),
+        Y('俺もそこ走ってる！ 何時？'),
+        E('Six. ...Every [week], I see you there. You never see me.', '六時。……毎{week|週}、そこで君を見てる。君は気づいてないけど。'),
+        V('また「見てる」。窓から、雨の中、そして川沿い。観測の範囲が広がっている。'),
+        Y('なんで声かけねーんだよ！'),
+        E("I couldn't. I was too shy to [ask].", 'できなかった。恥ずかしくて、{ask|声をかけ}られなかった。'),
+        Y('じゃあ明日から一緒に走ろうぜ！ ……あ、でも体育祭では敵だから、手加減しねーぞ。'),
+        E("[Please] don't. ...[Give] me your best.", '{please|どうか}手加減しないで。……君の全力を{give|ちょうだい}。'),
+        N('そして、陽太は小さな声で言った。'),
+        Y('なあ、トオル。体育祭が終わっても、夏休みも、来年も……ずっと、勉強しような。'),
+        E('...Every [year]. As your [friend]. ...For now.', '……毎{year|年}。君の{friend|友だち}として。……今のところは。'),
+        V('出た、「今のところは」。第一章からの伏線。次は体育祭。赤と白の、ふたりの夏が始まる。'),
+        N('――第2章 おわり。'),
+      ] },
+    ],
+    bonus: { title: 'おまけ：陽太のはじめての英語', lines: [
+      N('終業式の夜。あなたのスマホに、陽太からメッセージ。（また翻訳の依頼かと思った）'),
+      Y('『図書委員、これ英語で合ってるか見て！ トオルに送る前に！』'),
+      V('……陽太くんが、英語で書いた。あの十八点の陽太くんが。'),
+      E('Toru, [thank] you for [all] the [time] you [gave|give] me.', '透へ。君が僕に{give|くれた}{all|すべての}{time|時間}に、{thank|ありがとう}。', 'yota', '陽太の下書き'),
+      E('I [like] the [rain] now, [too].', '今は僕{too|も}、{rain|雨}が{like|好き}だ。', 'yota', '陽太の下書き'),
+      E("Let's [study] [together] [next] [year], [too].", '{next|来}{year|年}{too|も}、{together|一緒に}{study|勉強しよう}。', 'yota', '陽太の下書き'),
+      E('You are my [best] [friend]. ...[Now].', '君は僕の{best|いちばんの}{friend|友だち}。……{now|今は}。', 'yota', '陽太の下書き'),
+      V('「今は」。……ふたりとも、同じことを言っている。気づいているのは、たぶん私だけ。'),
+      N('あなたは返信した。「完璧。そのまま送って」'),
+      V('文法の確認は、図書委員の仕事の範囲外。でも、尊さの確認は、範囲内。'),
+    ] },
+  },
+  { id: 'c3', no: 3, month: '7月', title: '体育祭は赤と白', grammar: '未来の表現（will / be going to）・助動詞', plan: 120 },
+  { id: 'c4', no: 4, month: '8月', title: '夏期講習と花火', grammar: '不定詞・動名詞', plan: 120 },
+  { id: 'c5', no: 5, month: '9月', title: '文化祭『ロミオとロミオ』', grammar: '比較', plan: 120 },
+  { id: 'c6', no: 6, month: '10月', title: '幼なじみ、襲来', grammar: '受け身', plan: 120 },
+  { id: 'c7', no: 7, month: '11月', title: '模試の判定はE', grammar: '現在完了', plan: 120 },
+  { id: 'c8', no: 8, month: '12月', title: '冬期講習とイルミネーション', grammar: '分詞・関係代名詞', plan: 120 },
+  { id: 'c9', no: 9, month: '1月', title: '初詣と合格祈願', grammar: '間接疑問・いろいろな文型', plan: 120 },
+  { id: 'c10', no: 10, month: '2月', title: '入試前夜', grammar: '入試に出る熟語・会話の表現', plan: 120 },
+  { id: 'c11', no: 11, month: '3月', title: '合格発表', grammar: '総復習（仮定法を含む）', plan: 120 },
+  { id: 'c12', no: 12, month: '終章', title: '桜の下で、今度は僕が', grammar: '総まとめ', plan: 112 },
+];
+const EPS = CHAPTERS.flatMap(c => (c.eps || []).map(ep => { ep.ch = c; return ep; }));
+CHAPTERS.forEach(c => { if (c.bonus) c.bonus.ch = c; });
+/** 話ごとの場面（背景）：eve 夕方の図書室／day 昼の図書室／dusk 宵／rain 雨 */
+const EP_BG = { '1-1': 'eve', '1-2': 'day', '1-3': 'dusk', '1-4': 'eve', '2-1': 'rain', '2-2': 'day', '2-3': 'dusk', '2-4': 'day', '2-5': 'rain', '2-6': 'eve',
+  '2-7': 'day', '2-8': 'eve', '2-9': 'day', '2-10': 'eve', '2-11': 'dusk', '2-12': 'eve' };
+EPS.forEach(ep => { ep.bg = EP_BG[ep.id] || 'eve'; });
+const epWords = ep => WORDS.filter(w => w.ep === ep.id);
+const chWords = c => WORDS.filter(w => c.eps.some(ep => ep.id === w.ep));
+
+const REACT = {
+  ok: ['尊い……', '解釈一致', '優勝', 'てぇてぇ', '供給ありがとうございます', '天を仰いだ', '壁になりたい', '語彙力、回復', '正解。拝んだ', '今日も推しが尊い'],
+  ng: ['解釈違い……もう一回', '落ち着け、深呼吸', 'まだ慌てる時間じゃない', 'ここで覚えれば勝ち', '推しが見てる。もう一回'],
+};
+
+/* ---------------------------------------------------------
+   入試の形の問題（北海道の公立高校入試 R6〜R8 の形に合わせる）
+   → リサーチ/2026-10-26_北海道公立高校入試英語の形式.md
+   w＝確かめる単語（記憶の段階に反映）／英文の答えは [ ] ／ja＝訳（答えのあとに出す）
+   gform  大問2問1：形の語群（4語）から選んで「書く」
+   shiryo 大問2問2：資料（表・予定表・画面）を見て1語を書く。語群も頭文字もない
+   read   大問3C ：英文を読み、メモの□に1語を書く
+   lmemo  大問1問4：放送を聞いて（2回まで）メモに1語を書く
+   resp   大問1問2：対話を聞いて（1回だけ）応答を選ぶ。ans＝正解の番号
+   --------------------------------------------------------- */
+const DOC_SEAT = '<table class="dt"><tr><th colspan="3">窓　　窓　　窓</th></tr><tr><td><b>透</b></td><td>空き</td><td>空き</td></tr><tr><td>空き</td><td>空き</td><td>空き</td></tr><tr><th colspan="3">カウンター（図書委員）</th></tr></table>';
+const DOC_PLAN = '<table class="dt"><tr><th>曜日</th><th>放課後</th></tr><tr><td>月</td><td>サッカー部 → 図書室で勉強（透と）</td></tr><tr><td>火</td><td>サッカー部 → 図書室で勉強（透と）</td></tr><tr><td>水</td><td>図書室は休館日 → 家で勉強</td></tr><tr><td>木</td><td>サッカー部 → 図書室で勉強（透と）</td></tr></table>';
+const DOC_SHINRO = '<table class="dt"><tr><th>名前</th><td>日向 陽太（3年3組）</td></tr><tr><th>第一志望</th><td>星陵高校</td></tr><tr><th>理由</th><td>透と同じ学校に行きたいから<span class="sub">（消しゴムで消して、書き直した跡がある）</span></td></tr></table>';
+const DOC_TENKI = '<table class="dt"><tr><th>月</th><th>火</th><th>水</th><th>木</th><th>金</th></tr><tr><td>晴れ</td><td>くもり</td><td>雨</td><td>雨</td><td>晴れ</td></tr><tr><td>18℃</td><td>15℃</td><td>12℃</td><td>9℃</td><td>19℃</td></tr></table>';
+const DOC_PHONE = '<table class="dt"><tr><td>21:02</td><td>陽太</td><td>最後のページ、何て書いたの？</td></tr><tr><td>21:40</td><td>透</td><td>Don\'t worry. I\'m not angry.</td></tr><tr><td>22:00</td><td>陽太 → 透</td><td>［通話　15分］</td></tr></table>';
+const NYUSHI = {
+  c1: [
+    { t: 'gform', w: 'speak', q: 'Toru [speaks] English when he is nervous.', g: ['speak', 'speaks', 'spoke', 'speaking'], ja: '透は緊張すると英語を話す。（he・いまのこと → speaks）' },
+    { t: 'gform', w: 'teach', q: 'Can you [teach] me English, Toru?', g: ['teach', 'teaches', 'taught', 'teaching'], ja: '透、英語を教えてくれない？（can のあと → もとの形）' },
+    { t: 'gform', w: 'study', q: "Let's [study] in the library after practice.", g: ['study', 'studies', 'studied', 'studying'], ja: '練習のあと、図書室で勉強しよう。（Let\'s のあと → もとの形）' },
+    { t: 'gform', w: 'understand', q: "Does Toru [understand] Yota's feelings?", g: ['understand', 'understands', 'understood', 'understanding'], ja: '透は陽太の気持ちが分かっているのだろうか。（Does のあと → もとの形）' },
+    { t: 'shiryo', w: 'window', title: '図書室の座席表', html: DOC_SEAT, q: 'Toru always sits by the [window].', ja: '透はいつも窓のそばに座っている。' },
+    { t: 'shiryo', w: 'same', title: '進路希望調査票', html: DOC_SHINRO, q: 'Yota wants to go to the [same] school as Toru.', ja: '陽太は透と同じ学校に行きたい。' },
+    { t: 'shiryo', w: 'home', title: '陽太の放課後（5月）', html: DOC_PLAN, q: 'On Wednesday, the library is closed, so Yota studies at [home].', ja: '水曜日は図書室が休みなので、陽太は家で勉強する。' },
+    { t: 'read', w: 'library', title: "Toru's diary", passage: ['April 8', 'A loud boy came to the library today. His name is Yota.', "He can't read English well, but he wants to go to Seiryo High School.", "I am a new student here, so I don't have many friends. But today, Yota sat next to me.", 'I will stay in the library until his practice is over.'], q: 'Toru met Yota in the [library].', ja: '透は図書室で陽太に出会った。（日記：今日、図書室にうるさい男子が来た……）' },
+    { t: 'read', w: 'wait', title: "Toru's diary", passage: ['April 8', 'A loud boy came to the library today. His name is Yota.', "He can't read English well, but he wants to go to Seiryo High School.", "I am a new student here, so I don't have many friends. But today, Yota sat next to me.", 'I will stay in the library until his practice is over.'], q: 'Toru will [wait] for Yota after practice every day.', ja: '透は毎日、練習のあとに陽太を待つつもりだ。' },
+    { t: 'lmemo', w: 'tomorrow', who: 'toru', scene: '［透から陽太への留守番電話］', audio: "Hi Yota, it's Toru. Let's study in the library tomorrow. I will wait for you after practice. Don't be late.", q: 'When: [tomorrow], after practice', ja: 'やあ陽太、透だ。明日、図書室で勉強しよう。練習のあと待ってる。遅れないで。' },
+    { t: 'lmemo', w: 'late', who: 'toru', scene: '［透から陽太への留守番電話］', audio: "Hi Yota, it's Toru. Let's study in the library tomorrow. I will wait for you after practice. Don't be late.", q: "Don't be [late].", ja: 'やあ陽太、透だ。明日、図書室で勉強しよう。練習のあと待ってる。遅れないで。' },
+    { t: 'resp', w: 'seat', who: 'yota', scene: '［放課後の図書室で］', audio: 'Hey, is this seat free?', choices: ['Yes. You can sit here.', "No, it's a library.", "Yes, it's my dream.", "I'm a new student."], ans: 0, ja: '陽太「なあ、この席あいてる？」→「うん。ここに座っていいよ」' },
+    { t: 'resp', w: 'after', who: 'toru', scene: '［昼休みの教室で］', audio: 'Do you want to study with me after practice?', choices: ["Sure. I'll come to the library.", "No, I don't have a name.", "It's a difficult word.", 'Yes, it was yesterday.'], ans: 0, ja: '透「練習のあと、一緒に勉強する？」→「もちろん。図書室に行くよ」' },
+  ],
+  c2: [
+    { t: 'gform', w: 'share', q: 'Look! Toru is [sharing] his umbrella with Yota.', g: ['share', 'shares', 'shared', 'sharing'], ja: '見て！ 透が陽太と傘を分け合っている。（is のあと → ing）' },
+    { t: 'gform', w: 'forget', q: 'Yota [forgot] his umbrella yesterday.', g: ['forget', 'forgets', 'forgot', 'forgetting'], ja: '陽太はきのう傘を忘れた。（yesterday → 過去）' },
+    { t: 'gform', w: 'write', q: 'Toru [wrote] a message on the last page last night.', g: ['write', 'writes', 'wrote', 'writing'], ja: '透は昨夜、最後のページにメッセージを書いた。（last night → 過去）' },
+    { t: 'gform', w: 'smile', q: 'Yota was [smiling] when he read the notebook.', g: ['smile', 'smiles', 'smiled', 'smiling'], ja: '陽太は単語帳を読んでいるとき、ほほえんでいた。（was のあと → ing）' },
+    { t: 'shiryo', w: 'rain', title: 'この町の週間天気予報', html: DOC_TENKI, q: 'It will [rain] on Wednesday and Thursday.', ja: '水曜日と木曜日は雨が降るだろう。' },
+    { t: 'shiryo', w: 'cold', title: 'この町の週間天気予報', html: DOC_TENKI, q: 'On Thursday, it will be rainy and [cold].', ja: '木曜日は雨で寒くなるだろう。' },
+    { t: 'shiryo', w: 'call', title: '陽太のスマホの画面（日曜日）', html: DOC_PHONE, q: 'Yota [called] Toru at ten.', ja: '陽太は10時に透に電話をかけた。' },
+    { t: 'read', w: 'forget', title: 'The last page', passage: ['Dear Yota,', 'You always forget your umbrella, so I always bring mine.', 'When we stood under one umbrella, your hand was warm.', 'I made this notebook for you. Write each word three times.', "If you make a mistake, I will check it. Don't worry.", 'Toru'], q: 'Toru always brings his umbrella because Yota [forgets] his.', ja: '陽太が傘を忘れるから、透はいつも自分の傘を持ってくる。' },
+    { t: 'read', w: 'notebook', title: 'The last page', passage: ['Dear Yota,', 'You always forget your umbrella, so I always bring mine.', 'When we stood under one umbrella, your hand was warm.', 'I made this notebook for you. Write each word three times.', "If you make a mistake, I will check it. Don't worry.", 'Toru'], q: 'Toru made a [notebook] for Yota.', ja: '透は陽太のためにノートを作った。' },
+    { t: 'lmemo', w: 'rain', who: 'toru', scene: '［昼休み、透から陽太へのメッセージ（音声）］', audio: "Yota, it will rain this afternoon. Don't forget your umbrella. If you forget it, come under mine. We can share.", q: 'Weather: it will [rain] this afternoon.', ja: '陽太、午後は雨だよ。傘を忘れないで。忘れたら、僕の傘においで。分け合えばいい。' },
+    { t: 'lmemo', w: 'share', who: 'toru', scene: '［昼休み、透から陽太へのメッセージ（音声）］', audio: "Yota, it will rain this afternoon. Don't forget your umbrella. If you forget it, come under mine. We can share.", q: 'If I forget my umbrella, we can [share] his.', ja: '陽太、午後は雨だよ。傘を忘れないで。忘れたら、僕の傘においで。分け合えばいい。' },
+    { t: 'resp', w: 'umbrella', who: 'toru', scene: '［雨の昇降口で］', audio: 'You forgot your umbrella again?', choices: ['Yes. Can we share yours?', "No, it's warm in the notebook.", 'Yes, I wrote a letter.', "I'm glad you like it."], ans: 0, ja: '透「また傘を忘れたの？」→「うん。お前のに入れてくれる？」' },
+    { t: 'resp', w: 'reply', who: 'yota', scene: '［月曜日の図書室で］', audio: "Why didn't you reply to my message?", choices: ['Sorry. My phone was off.', "It's on the last page.", "Let's walk home together.", "Yes, I'll check it."], ans: 0, ja: '陽太「なんでメッセージに返事くれなかったの？」→「ごめん。スマホの電源が切れてた」' },
+  ],
+};
+
+/* =========================================================
+   [S3] Store：記録はこの端末の localStorage だけ（個人情報は持たない）
+   ========================================================= */
+const KEY = 'sontan.v1';
+const DEFAULT = () => ({ v: 1, words: {}, eps: {}, chs: {}, log: {}, fs: {}, set: { exam: '2027-03-03', tts: true, rate: 0.9, tk: true, voice: false } });
+let S = DEFAULT();
+let canSave = true;
+function load() {
+  try {
+    const raw = localStorage.getItem(KEY);
+    if (!raw) return;
+    const d = JSON.parse(raw);
+    S = Object.assign(DEFAULT(), d);
+    S.set = Object.assign(DEFAULT().set, d.set || {});
+  } catch (e) { console.warn('記録を読めなかった', e); }
+}
+function save() {
+  try { localStorage.setItem(KEY, JSON.stringify(S)); }
+  catch (e) { if (canSave) { canSave = false; toast('この端末では記録が残せない設定になっている'); console.warn('保存できない', e); } }
+}
+/** 単語ごとの記録（s=段階 0未習/1うろ覚え/2〜7, due=次の復習, ok/ng=はじめの答えの正誤） */
+const ws = id => S.words[id] || (S.words[id] = { s: 0, due: 0, ok: 0, ng: 0, last: 0 });
+const epSt = ep => S.eps[ep.id] || { pos: 0, learned: false, done: false };
+const epW = ep => S.eps[ep.id] || (S.eps[ep.id] = { pos: 0, learned: false, done: false });
+const today = () => S.log[ymd(now())] || (S.log[ymd(now())] = { n: 0, r: 0, ok: 0, ng: 0 });
+const chCleared = c => !!(S.chs[c.id] && S.chs[c.id].cleared);
+function chUnlocked(c) { if (DEV) return !!c.eps; const i = CHAPTERS.indexOf(c); if (i === 0) return true; const p = CHAPTERS[i - 1]; return !!p.eps && chCleared(p); }
+function epUnlocked(ep) { if (DEV) return true; const c = ep.ch; if (!chUnlocked(c)) return false; const i = c.eps.indexOf(ep); return i === 0 || epSt(c.eps[i - 1]).done; }
+const chTestReady = c => !!c.eps && c.eps.every(ep => epSt(ep).done);
+const chName = c => `第${c.no}章`;
+const epNo = ep => ep.ch.eps.indexOf(ep) + 1;
+
+/* =========================================================
+   [S4] 記憶の段階（間隔反復）
+   ---------------------------------------------------------
+   段階 2 → 1日後、3 → 3日後、4 → 7日後、5 → 14日後、6 → 30日後、7（殿堂入り）→ 60日後
+   はじめの答えが正解 → 段階が1つ上がる（復習の日が来ている語だけ）
+   まちがい → 段階1（うろ覚え）に戻り、物語の訳がまた ■■ になる。同じ回で直せたら段階2
+   訳の見え方：段階2以上で日が来ていない＝読める／日が来た＝霞む／段階1以下＝読めない
+   ========================================================= */
+const IVL = { 2: 1, 3: 3, 4: 7, 5: 14, 6: 30, 7: 60 };
+const isDue = st => st.s >= 1 && st.due <= now();
+const dueAt = s => (s <= 1 ? now() : dayStart(now()) + IVL[s] * DAY);
+function setStage(id, s) { const st = ws(id); st.s = s; st.due = dueAt(s); st.last = now(); }
+function tally(id, ok) { const st = ws(id); const t = today(); if (ok) { st.ok++; t.ok++; } else { st.ng++; t.ng++; } }
+const SRS = {
+  learned(id) { setStage(id, 2); },
+  ok(id) { tally(id, true); const st = ws(id); if (st.s <= 1) setStage(id, 2); else if (isDue(st)) setStage(id, Math.min(7, st.s + 1)); },
+  ng(id) { tally(id, false); setStage(id, 1); },
+  relearn(id) { if (ws(id).s <= 1) setStage(id, 2); },
+  vis(id) { if (DEV) return 'ok'; const st = S.words[id]; if (!st || st.s < 2) return 'unk'; return isDue(st) ? 'fade' : 'ok'; },
+  due() { return WORDS.filter(w => S.words[w.id] && isDue(S.words[w.id])).sort((a, b) => S.words[a.id].due - S.words[b.id].due); },
+};
+const lockedNow = () => SRS.due().length >= LOCK_DUE;
+const learnedCount = () => WORDS.filter(w => (S.words[w.id] || {}).s >= 2).length;
+const clearCount = () => WORDS.filter(w => SRS.vis(w.id) === 'ok').length;
+/** ふたりの距離（m）：読める語が増えるほど縮み、霞むと開く */
+const distance = () => 10 * (1 - clearCount() / WORDS.length);
+function stageTag(id) {
+  const st = S.words[id]; if (!st || st.s < 1) return '';
+  if (st.s >= 2 && isDue(st)) return '<span class="tag fade">霞んでいる</span>';
+  if (st.s === 1) return '<span class="tag">うろ覚え</span>';
+  if (st.s <= 3) return '<span class="tag toru">覚えたて</span>';
+  if (st.s <= 6) return '<span class="tag ok">定着</span>';
+  return '<span class="tag ok">殿堂入り</span>';
+}
+function streak() {
+  const active = k => { const l = S.log[k]; return !!l && (l.n + l.r) > 0; };
+  let d = dayStart(now()); if (!active(ymd(d))) d -= DAY;
+  let n = 0; while (active(ymd(d))) { n++; d -= DAY; }
+  return n;
+}
+function daysLeft() {
+  const t = new Date(S.set.exam + 'T00:00:00').getTime();
+  return isNaN(t) ? -1 : Math.round((t - dayStart(now())) / DAY);
+}
+
+/* =========================================================
+   [S5] 読み上げ
+   ---------------------------------------------------------
+   1. 音声ファイルを先に使う（audio/index.js の対応表。tools/make_audio.mjs が Mac の声で作る）。どの端末でも同じ声が鳴る
+   2. ファイルが無い文だけ、ブラウザの読み上げ（Web Speech）に回す。遊び用の声（Albert・Bubbles など）は選ばない。
+      3秒たっても始まらなければ止めて知らせる（Claude のアプリの中のブラウザでは始まらなかった・2026-10-27）
+   声：単語＝アメリカ英語／透の英語・例文・日記＝イギリス英語（男声）／陽太の英語＝アメリカ英語（男声）
+   ========================================================= */
+const ODD_VOICE = /^(Albert|Bad News|Bahh|Bells|Boing|Bubbles|Cellos|Wobble|Good News|Jester|Organ|Superstar|Trinoids|Whisper|Zarvox|Fred|Junior|Kathy|Ralph|Grandma|Grandpa)\b/;
+const GOOD_VOICE = /^(Samantha|Alex|Daniel|Karen|Moira|Tessa|Serena|Allison|Ava|Tom|Arthur|Martha|Google (US|UK) English|Microsoft (Aria|Jenny|Guy|Libby|Ryan|Sonia))/;
+const TTS = {
+  ok: typeof window.speechSynthesis !== 'undefined' && typeof window.SpeechSynthesisUtterance !== 'undefined',
+  voices: [],
+  init() { if (!this.ok) return; const load = () => { this.voices = speechSynthesis.getVoices() || []; }; load(); speechSynthesis.onvoiceschanged = load; },
+  files() { return window.AUDIO_INDEX || null; },
+  available() { return !!this.files() || this.ok; },
+  can() { return !!S.set.tts && this.available(); },
+  tag(who) { return who === 'toru' || who === 'note' ? 'uk' : who === 'yota' ? 'usm' : 'us'; },
+  /** 端末の声を選ぶ：同じ言語のよい声 → 英語のよい声 → 同じ言語の声（遊び用の声は除く） */
+  voice(lang) {
+    const en = this.voices.filter(v => /^en[-_]/i.test(v.lang) && !ODD_VOICE.test(v.name));
+    const same = en.filter(v => v.lang.replace('_', '-') === lang);
+    return same.find(v => GOOD_VOICE.test(v.name)) || en.find(v => GOOD_VOICE.test(v.name)) || same[0] || en[0] || null;
+  },
+  say(text, who) {
+    if (!S.set.tts || !text) return;
+    const f = this.files() && this.files()[`${this.tag(who)}|${text}`];
+    if (f) return this.play('audio/' + f);
+    this.speak(text, who);
+  },
+  /** 音声ファイルを鳴らす（1つの audio を使い回す。iPhone でも最初に押したときから鳴るように） */
+  play(src, report) {
+    this.stop();
+    const a = this.el || (this.el = new Audio());
+    a.src = src;
+    a.playbackRate = (Number(S.set.rate) || 0.9) / 0.9;
+    a.onplaying = () => report && report('鳴った');
+    a.onended = () => report && report(`鳴った（${a.duration.toFixed(1)}秒）`);
+    a.onerror = () => { console.warn('音声ファイルを読めない', src); report ? report('ファイルを読めなかった') : this.speakFallback(src); };
+    const p = a.play();
+    if (p && p.catch) p.catch(e => { console.warn('音声ファイルを鳴らせない', src, e && e.name); if (report) report(`鳴らせなかった（${e && e.name}）`); else this.warnOnce('音声を鳴らせなかった。端末の音量と消音のスイッチを確かめてね'); });
+  },
+  speakFallback() { this.warnOnce('音声ファイルが見つからない。端末の読み上げに切り替える'); },
+  /** ブラウザの読み上げ。始まらなければ3秒で止めて知らせる */
+  speak(text, who, report) {
+    if (!this.ok) { if (report) report('この端末には読み上げの機能がない'); else this.warnOnce('この端末では読み上げが使えない'); return; }
+    try {
+      const busy = speechSynthesis.speaking || speechSynthesis.pending;
+      speechSynthesis.cancel();
+      const u = new SpeechSynthesisUtterance(text);
+      const v = this.voice(who === 'toru' || who === 'note' ? 'en-GB' : 'en-US');
+      if (v) { u.voice = v; u.lang = v.lang; } else u.lang = 'en-US';
+      u.rate = Number(S.set.rate) || 0.9;
+      let started = false;
+      u.onstart = () => { started = true; if (report) report(`始まった（声：${v ? v.name : '端末の標準'}）`); else if (!S.audioTest || /^自動/.test(S.audioTest)) { S.audioTest = `自動：読み上げできた（声：${v ? v.name : '端末の標準'}・声の数 ${this.voices.length}）`; save(); } };
+      u.onend = () => { if (report && started) report(`読み終わった（声：${v ? v.name : '端末の標準'}）`); };
+      u.onerror = e => { if (e.error === 'canceled' || e.error === 'interrupted') return; console.warn('読み上げのエラー', e.error); if (report) report(`エラー（${e.error}）`); };   // 自分で止めたときの合図は無視する
+      this.u = u;               // Chrome で途中で消えないように持っておく
+      const go = () => { try { speechSynthesis.resume(); speechSynthesis.speak(u); } catch (e) { console.warn('読み上げできない', e); } };
+      if (busy) setTimeout(go, 80); else go();   // 止めた直後に話させると、Chrome では落ちることがある
+      clearTimeout(this.wd);
+      this.wd = setTimeout(() => {
+        if (started || this.u !== u) return;
+        speechSynthesis.cancel();
+        console.warn('読み上げが3秒たっても始まらなかった', text);
+        if (!report) { S.audioTest = `自動：読み上げが3秒たっても始まらない（声の数 ${this.voices.length}）`; save(); }
+        if (report) report('3秒たっても始まらない（この画面では端末の読み上げが動いていない）');
+        else this.warnOnce('この画面では、端末の読み上げが動いていない（設定の「音声のテスト」で確かめられる）');
+      }, 3000);
+    } catch (e) { console.warn('読み上げできない', e); }
+  },
+  warnOnce(msg) { if (this.warned) return; this.warned = true; toast(msg); },
+  stop() {
+    if (this.el) try { this.el.pause(); } catch (e) { /* なにもしない */ }
+    if (this.ok) try { speechSynthesis.cancel(); } catch (e) { /* なにもしない */ }
+  },
+};
+const spk = (text, who = '') => TTS.available() ? `<button class="spk" data-act="say" data-arg="${esc(text)}" data-who="${who}" aria-label="読み上げ" title="読み上げ"><span class="material-symbols-outlined" aria-hidden="true">volume_up</span></button>` : '';
+
+/* =========================================================
+   [S6] UI の部品
+   ========================================================= */
+let toastTimer = 0;
+function toast(msg) { const t = $('#toast'); t.textContent = msg; t.hidden = false; clearTimeout(toastTimer); toastTimer = setTimeout(() => { t.hidden = true; }, 2200); }
+const enHTML = en => esc(en).replace(/\[([^\]|]+)(?:\|[^\]]+)?\]/g, '<b class="hw">$1</b>');
+const exHTML = w => esc(w.ex).replace(/\[([^\]]+)\]/, '<b>$1</b>');
+const exJaHTML = w => esc(w.exJa).replace(/\{([^}]+)\}/, '<b>$1</b>');
+const exForm = w => w.ex.match(/\[([^\]]+)\]/)[1];
+function qHead(title, cur, total) {
+  const pct = total ? Math.round(cur / total * 100) : 0;
+  return `<div class="q-head"><button class="link" data-act="home">やめる</button><span class="ttl">${esc(title)}</span><button class="link" data-act="fb">気づいた</button><span class="cnt">${total ? `${cur} / ${total}` : ''}</span></div><div class="prog"><i style="width:${pct}%"></i></div>`;
+}
+/** 端末のようす（気づいたことに付ける。名前や ID は入れない） */
+function deviceInfo() {
+  const ua = navigator.userAgent;
+  const os = /CrOS/.test(ua) ? 'Chromebook' : /iPhone|iPad/.test(ua) ? 'iPhone/iPad' : /Android/.test(ua) ? 'Android' : /Mac OS X/.test(ua) ? 'Mac' : /Windows/.test(ua) ? 'Windows' : 'その他';
+  const br = /Edg\//.test(ua) ? 'Edge' : /CriOS|Chrome\//.test(ua) ? 'Chrome' : /Firefox|FxiOS/.test(ua) ? 'Firefox' : /Safari\//.test(ua) ? 'Safari' : '?';
+  return `${os}・${br}・幅${window.innerWidth}`;
+}
+/** 気づいたことを送る：Google フォームを、どこで・端末・音声のようす・版を書きこんだ状態で開く */
+function openFeedback() {
+  const names = { home: 'ホーム', story: '物語の一覧', words: '単語帳', record: '記録', settings: '設定', result: '結果の画面', lock: '続きが読めない画面' };
+  const where = VIEW && VIEW.where ? VIEW.where() : (names[VIEW && VIEW.name] || '');
+  const info = { WHERE: where, DEVICE: deviceInfo(), AUDIO: S.audioTest || 'まだ試していない', VERSION: `${APP_VERSION}（${BUILD}）` };
+  if (!FEEDBACK_FORM) { toast('送る先（フォーム）を準備中。気づいたことは先生に直接伝えてね'); console.log('気づいたこと', info); return; }
+  let url = FEEDBACK_FORM;
+  for (const [k, v] of Object.entries(info)) url = url.replace(new RegExp(`=${k}(?=&|$)`), '=' + encodeURIComponent(v));
+  window.open(url, '_blank', 'noopener');
+}
+
+/* =========================================================
+   [S7] ルーティング（画面の出し分けはここだけが行う）
+   ========================================================= */
+const app = $('#app');
+const VIEWS = {};
+let VIEW = null;
+function go(name, arg) {
+  TTS.stop();
+  VIEW = VIEWS[name](arg || {});
+  VIEW.name = name;
+  document.body.classList.toggle('focus', !!VIEW.focus);
+  document.body.classList.toggle('titled', !!VIEW.titled);
+  $('#scene').className = 'sc-' + (VIEW.scene || 'day');
+  document.querySelectorAll('#tabs button').forEach(b => b.classList.toggle('on', b.dataset.view === VIEW.tab));
+  window.scrollTo(0, 0);
+  render();
+}
+function render() {
+  app.innerHTML = VIEW.html();
+  updateHeader();
+  if (VIEW.after) VIEW.after();
+}
+function updateHeader() {
+  const n = daysLeft();
+  $('#examLeft').innerHTML = n >= 0 ? `入試まで あと <b>${n}</b> 日` : '';
+  $('#buildTag').textContent = `テスト版 ${APP_VERSION}${DEV ? '・確認モード' : ''}`;
+}
+const ACT = {
+  home: () => go('home'),
+  openEp: id => openEp(id),
+  review: () => startReview(),
+  test: id => startTest(id),
+  drill: id => startDrill(id),
+  bonus: id => openBonus(id),
+  practice: () => startPractice(),
+  say: (t, el) => TTS.say(t, el.dataset.who),
+  fb: () => openFeedback(),
+  slot: k => toast(k === 'unk' ? 'この単語を覚えると読める' : '復習すると、はっきり読める'),
+};
+app.addEventListener('click', e => {
+  const t = e.target.closest('[data-act]');
+  if (t) {
+    const fn = (VIEW.act && VIEW.act[t.dataset.act]) || ACT[t.dataset.act];
+    if (fn) { e.preventDefault(); fn(t.dataset.arg, t, e); }
+    return;
+  }
+  if (VIEW.tap) VIEW.tap(e);
+});
+app.addEventListener('input', e => { if (VIEW.input) VIEW.input(e); });
+app.addEventListener('change', e => { if (VIEW.change) VIEW.change(e); });
+app.addEventListener('submit', e => { e.preventDefault(); if (VIEW.submit) VIEW.submit(e); });
+document.addEventListener('keydown', e => { if (VIEW && VIEW.key && !e.metaKey && !e.ctrlKey && !e.altKey) VIEW.key(e); });
+$('#tabs').addEventListener('click', e => { const b = e.target.closest('button[data-view]'); if (b) go(b.dataset.view); });
+
+/* =========================================================
+   [S8] ホーム（ノベルゲームのタイトル画面）
+   ========================================================= */
+function nextTarget() {
+  for (const c of CHAPTERS) {
+    if (!c.eps || !chUnlocked(c)) break;
+    for (const ep of c.eps) if (!epSt(ep).done) return { type: 'ep', ep };
+    if (c.test && !chCleared(c)) return { type: 'test', ch: c };
+  }
+  return { type: 'end' };
+}
+function lockHTML(due) {
+  return `<div class="win"><span class="name voice">心の声</span>
+      <p class="v">待って。覚えたはずの単語が霞んでる。このままだと、あの名ゼリフがまた ■■ になる……！</p>
+      <p class="cant"><span class="material-symbols-outlined" aria-hidden="true">lock</span> 続きが読めない。たまっている復習 ${due}語（${LOCK_DUE}語より少なくなると読める）</p>
+    </div>
+    <div class="menu"><button class="btn vn main" data-act="review"><span class="m-k">復習</span>霞んだ単語を取り戻す</button></div>`;
+}
+/** ふたりの距離（好感度ゲージの形）：読める語が増えるほど縮み、霞むと開く */
+function gaugeHTML() {
+  const d = distance(), pct = Math.round((1 - d / 10) * 100);
+  return `<div class="gauge" aria-label="ふたりの距離"><span>透</span><span class="g-bar"><i style="width:${pct}%"></i><b class="g-heart" style="left:${pct}%">♡</b></span><span>陽太</span></div>
+    <p class="dist-num">ふたりの距離<b>${d.toFixed(1)}</b>m<span>覚えた単語で縮まる。霞むと、また開く。</span></p>`;
+}
+VIEWS.home = () => ({
+  tab: 'home', scene: 'eve', titled: true,
+  html() {
+    const due = SRS.due().length, nt = nextTarget();
+    const dueBtn = due ? `<button class="btn vn" data-act="review">復習する（${due}語）</button>` : '';
+    let main;
+    if (nt.type === 'ep' && due >= LOCK_DUE) main = lockHTML(due);
+    else if (nt.type === 'ep') {
+      const st = epSt(nt.ep);
+      const first = !Object.keys(S.eps).length;
+      main = `${first ? '<div class="win"><span class="name voice">心の声</span><p class="v">あの人の英語のセリフは、単語を覚えるまで ■■ で読めない。……覚えるしかない。</p></div>' : ''}
+        <div class="menu"><button class="btn vn main" data-act="openEp" data-arg="${nt.ep.id}"><span class="m-k">${st.pos > 0 ? 'つづきから' : 'はじめから'}</span>${chName(nt.ep.ch)} 第${epNo(nt.ep)}話「${esc(nt.ep.title)}」</button>${dueBtn}</div>`;
+    } else if (nt.type === 'test') {
+      const n = Math.min(TEST_N, chWords(nt.ch).length);
+      main = `<div class="menu"><button class="btn vn main" data-act="test" data-arg="${nt.ch.id}"><span class="m-k">章末テスト　${n}問中${Math.ceil(n * PASS_RATE)}問で合格</span>${chName(nt.ch)}「${esc(nt.ch.title)}」</button>${dueBtn}</div>`;
+    } else {
+      main = `<div class="win"><span class="name voice">心の声</span><p class="v">続きは、まだ書かれていない。いまは復習で、ふたりの距離を縮めよう。</p></div>
+        <div class="menu">${due ? `<button class="btn vn main" data-act="review">復習する（${due}語）</button>` : ''}</div>`;
+    }
+    const t = S.log[ymd(now())] || { n: 0, r: 0 };
+    const left = daysLeft();
+    const pace = left > 0 ? Math.ceil(Math.max(0, PLANNED_TOTAL - learnedCount()) / left) : 0;
+    return `<div class="title"><h1>尊単</h1><p>君の英語が、読めるまで</p></div>
+      ${gaugeHTML()}${main}
+      <div class="menu"><button class="btn vn" data-act="fb">テスト版：気づいたことを送る</button></div>
+      <section class="panel"><div class="stats"><div><span class="k">今日 覚えた</span><b>${t.n}</b>語</div><div><span class="k">今日 復習</span><b>${t.r}</b>語</div><div><span class="k">連続</span><b>${streak()}</b>日</div></div>
+      <p class="plan">${left > 0 ? `入試まで${left}日。全${PLANNED_TOTAL.toLocaleString()}語を覚えるなら、1日${pace}語（${(pace / 10).toFixed(1)}話）のペース。` : '入試の日を「設定」で入れると、1日のペースが出る。'}</p></section>`;
+  },
+});
+
+/* =========================================================
+   [S9] 物語の一覧・読む（会話窓に1行ずつ。LOG で読み返す）
+   ========================================================= */
+function openEp(id) {
+  const ep = EPS.find(e => e.id === id);
+  if (!ep || !epUnlocked(ep)) return toast('前の話を読むと開く');
+  if (!DEV && !epSt(ep).done && lockedNow()) return go('lock');
+  go('reader', { ep });
+}
+function openBonus(cid) {
+  const c = CHAPTERS.find(x => x.id === cid);
+  if (!c || !chCleared(c)) return toast('章末テストに合格すると読める');
+  go('reader', { bonus: c.bonus });
+}
+VIEWS.lock = () => ({ focus: true, scene: 'eve', html() { return qHead('', 0, 0) + '<div class="title"><p>続きが読めない</p></div>' + lockHTML(SRS.due().length); } });
+VIEWS.story = () => ({
+  tab: 'story', scene: 'eve',
+  html() {
+    const due = SRS.due().length;
+    const warn = due >= LOCK_DUE ? `<p class="warn">復習がたまっている（${due}語）。新しい話は、復習してから。 <button class="link" data-act="review">復習する</button></p>` : '';
+    return warn + CHAPTERS.map(c => {
+      const head = `<h3><span class="no">CHAPTER ${c.no}　${c.month}</span>${esc(c.title)}</h3>`;
+      if (!c.eps) return `<section class="ch off">${head}<p class="meta">準備中　文法：${esc(c.grammar)}　約${c.plan}語</p></section>`;
+      const rows = c.eps.map((ep, i) => {
+        const st = epSt(ep), un = epUnlocked(ep);
+        const tag = st.done ? '<span class="tag ok">読んだ</span>' : !un ? '<span class="tag lock"><span class="material-symbols-outlined" aria-label="まだ読めない">lock</span></span>' : st.pos > 0 ? '<span class="tag toru">途中</span>' : '<span class="tag toru">次</span>';
+        return `<button class="row" data-act="openEp" data-arg="${ep.id}" ${un ? '' : 'disabled'}><span>第${i + 1}話「${esc(ep.title)}」 <span class="sub">${epWords(ep).length}語</span></span>${tag}</button>`;
+      }).join('');
+      let test = '';
+      if (c.test) {
+        const rec = S.chs[c.id], ready = chTestReady(c), n = Math.min(TEST_N, chWords(c).length);
+        const tag = chCleared(c) ? `<span class="tag ok">合格 ${rec.best}/${n}</span>` : ready ? '<span class="tag toru">受けられる</span>' : '<span class="tag">全部の話を読むと</span>';
+        test = `<button class="row" data-act="test" data-arg="${c.id}" ${ready ? '' : 'disabled'}><span>章末テスト <span class="sub">${n}問・${Math.ceil(n * PASS_RATE)}問で合格</span></span>${tag}</button>`;
+      }
+      const nyN = (NYUSHI[c.id] || []).length;
+      const drill = nyN ? `<button class="row" data-act="drill" data-arg="${c.id}" ${chTestReady(c) ? '' : 'disabled'}><span>入試の形で練習 <span class="sub">${nyN}問・北海道の公立入試の形</span></span>${chTestReady(c) ? '<span class="tag toru">解ける</span>' : '<span class="tag">全部の話を読むと</span>'}</button>` : '';
+      const bonus = c.bonus ? `<button class="row" data-act="bonus" data-arg="${c.id}" ${chCleared(c) ? '' : 'disabled'}><span>${esc(c.bonus.title)}</span>${chCleared(c) ? '<span class="tag ok">読める</span>' : '<span class="tag">テストに合格すると</span>'}</button>` : '';
+      const more = c.more ? '<p class="meta">この章のつづきは準備中</p>' : '';
+      return `<section class="ch">${head}<p class="meta">文法：${esc(c.grammar)}</p>${rows}${drill}${test}${bonus}${more}</section>`;
+    }).join('');
+  },
+});
+/** 訳の枠 {id|訳} を、いまの記憶で描く（読める＝金・霞む・■■） */
+function jaSlots(ja, fresh) {
+  let unk = 0, fade = 0;
+  const html = esc(ja).replace(/\{([^}|]+)\|([^}]+)\}/g, (m, id, txt) => {
+    const v = SRS.vis(id);
+    if (v === 'unk') { unk++; return `<span class="slot unk" data-act="slot" data-arg="unk" aria-label="まだ覚えていない単語">${'■'.repeat(Math.min(4, Math.max(2, txt.length)))}</span>`; }
+    if (v === 'fade') { fade++; return `<span class="slot fade" data-act="slot" data-arg="fade">${txt}</span>`; }
+    return `<span class="slot ok${fresh && fresh.has(id) ? ' new' : ''}">${txt}</span>`;
+  });
+  return { html, unk, fade };
+}
+const sayLine = L => (/^『/.test(L.t) ? esc(L.t) : `「${esc(L.t)}」`);
+/** いまの1行を会話窓に出す */
+function winHTML(L, fresh, tail) {
+  if (L.k === 'n') return `<div class="win"><p>${esc(L.t)}</p>${tail}</div>`;
+  if (L.k === 'v') return `<div class="win"><span class="name voice">心の声</span><p class="v">${esc(L.t)}</p>${tail}</div>`;
+  if (L.k === 's') return `<div class="win"><span class="name ${L.w}">${CAST[L.w].short}</span><p>${sayLine(L)}</p>${tail}</div>`;
+  if (L.k === 'e') {
+    const j = jaSlots(L.ja, fresh);
+    const cant = j.unk ? '<p class="cant">訳せない……（語彙力が足りない）</p>' : j.fade ? '<p class="cant">霞んでいる……（復習すると戻る）</p>' : '';
+    return `<div class="win"><span class="name ${L.w}">${esc(L.lb || CAST[L.w].short)}</span><p class="en">${enHTML(L.en)} ${spk(plain(L.en), L.w)}</p><p class="ja">${j.html}</p>${cant}${tail}</div>`;
+  }
+  return '';
+}
+/** LOG の1行 */
+function logLineHTML(L) {
+  if (L.k === 'gate') return '<p class="log-gate">― ここで単語を覚えた ―</p>';
+  if (L.k === 'n') return `<p class="log-n">${esc(L.t)}</p>`;
+  if (L.k === 'v') return `<p class="log-v">（${esc(L.t)}）</p>`;
+  if (L.k === 's') return `<p class="log-s"><b class="${L.w}">${CAST[L.w].short}</b>${sayLine(L)}</p>`;
+  if (L.k === 'e') { const j = jaSlots(L.ja); return `<div class="log-e"><b class="${L.w}">${esc(L.lb || CAST[L.w].short)}</b><p class="en">${enHTML(L.en)} ${spk(plain(L.en), L.w)}</p><p class="ja">${j.html}</p></div>`; }
+  return '';
+}
+/** 訳が現れたときの光の粒 */
+function spark() {
+  const sp = $('#spark'); if (!sp) return;
+  sp.innerHTML = '';
+  for (let i = 0; i < 16; i++) {
+    const s = document.createElement('span');
+    s.textContent = i % 3 ? '✦' : '·';
+    s.style.left = (6 + (i * 29) % 88) + '%';
+    s.style.animationDelay = (i * 0.08) + 's';
+    sp.appendChild(s);
+  }
+}
+VIEWS.reader = ({ ep, bonus, fresh }) => {
+  const lines = bonus ? bonus.lines : ep.lines;
+  const title = bonus ? `${chName(bonus.ch)} ${bonus.title}` : `${chName(ep.ch)} 第${epNo(ep)}話「${ep.title}」`;
+  const st = ep ? epW(ep) : null;
+  const done0 = !!(st && st.done);
+  const newIds = new Set(fresh || []);
+  const gateAt = lines.findIndex(L => L.k === 'gate');
+  // pos＝出した行の数（いま会話窓にあるのは lines[pos-1]）。読み終えた話は頭から読み返す
+  let pos = bonus || (done0 && !fresh) ? 1 : Math.max(1, st.pos);
+  // 関門から戻ったら、関門の前の英語のセリフを「回想」でもう一度出す。今度は訳が読める
+  let recall = null;
+  if (fresh && gateAt >= 0) {
+    for (let k = gateAt - 1; k >= 0; k--) if (lines[k].k === 'e') { recall = k; break; }
+    pos = Math.max(pos, gateAt);
+  }
+  let showLog = false, sparkled = false;
+  const learned = () => DEV || !st || st.learned;
+  function keep() { if (!st) return; st.pos = Math.max(st.pos, pos); if (pos >= lines.length) st.done = true; save(); }
+  keep();
+  const atGate = () => recall === null && lines[pos] && lines[pos].k === 'gate' && !learned();
+  const atEnd = () => recall === null && pos >= lines.length;
+  function voice() { const L = lines[pos - 1]; if (S.set.voice && L && L.k === 'e') TTS.say(plain(L.en), L.w); }
+  function adv() {
+    if (showLog) return;
+    if (recall !== null) { recall = null; newIds.clear(); pos = Math.min(lines.length, gateAt + 2); keep(); render(); voice(); return; }
+    if (atGate() || atEnd()) return;
+    const n = lines[pos];
+    pos = Math.min(lines.length, pos + (n.k === 'gate' ? 2 : 1));
+    keep(); render(); voice();
+  }
+  function gateHTML() {
+    const list = epWords(ep), due = SRS.due().length;
+    return `<section class="panel gate">
+      <p class="lbl">この先は、英語が分からないと進めない</p>
+      <p>■■ のところを訳すには、この${list.length}語を覚えよう。</p>
+      <p class="en gate-words">${list.map(w => esc(w.en)).join(' · ')}</p>
+      ${due >= LOCK_DUE ? `<p class="note">……の前に。復習がたまっている（${due}語）。</p><button class="btn wide" data-act="review">復習する</button>` : `<button class="btn wide" data-act="learn">${list.length}語を覚える</button>`}
+    </section>`;
+  }
+  function endHTML() {
+    if (bonus) return `<section class="panel end"><p class="lbl">おまけ おわり</p><button class="btn wide" data-act="home">ホームへ</button></section>`;
+    const c = ep.ch, i = c.eps.indexOf(ep), nx = c.eps[i + 1];
+    let btn = '';
+    if (nx) btn = `<button class="btn wide" data-act="openEp" data-arg="${nx.id}">次の話へ</button>`;
+    else if (c.test && !chCleared(c)) btn = `<button class="btn wide" data-act="test" data-arg="${c.id}">章末テストへ</button>`;
+    else { const nc = CHAPTERS[CHAPTERS.indexOf(c) + 1]; if (nc && nc.eps) btn = `<button class="btn wide" data-act="openEp" data-arg="${nc.eps[0].id}">${chName(nc)}へ</button>`; }
+    return `<section class="panel end"><p class="lbl">第${i + 1}話 おわり</p>${btn}<button class="btn ghost wide" data-act="log">LOG で読み返す</button><button class="btn ghost wide" data-act="home">ホームへ</button></section>`;
+  }
+  function logHTML() {
+    const upto = done0 ? lines.length : pos;
+    return `<div class="log"><div class="log-in"><p class="log-t">LOG　${esc(title)}</p>${lines.slice(0, upto).map(logLineHTML).join('')}<button class="btn vn main wide" data-act="closelog">閉じる</button></div></div>`;
+  }
+  return {
+    focus: true, tab: 'story', scene: bonus ? 'day' : ep.bg,
+    html() {
+      const L = recall !== null ? lines[recall] : lines[pos - 1];
+      const stop = atGate() || atEnd();
+      let center = '';
+      if (recall !== null) center = '<p class="recall-k">― 回想 ―</p>';
+      else if (atGate()) center = gateHTML();
+      else if (atEnd()) center = endHTML();
+      return `<div class="rd">
+        <div class="q-head"><button class="link" data-act="home">やめる</button><span class="ttl">${esc(title)}</span><button class="link" data-act="fb">気づいた</button><button class="link" data-act="log">LOG</button></div>
+        <div class="rd-stage">${center}</div>
+        <div class="rd-msg">${recall !== null ? '<div class="spark" id="spark"></div>' : ''}${winHTML(L, recall !== null ? newIds : null, stop ? '' : '<span class="next" aria-hidden="true">▼</span>')}</div>
+        ${showLog ? logHTML() : ''}
+      </div>`;
+    },
+    where() {
+      const L = recall !== null ? lines[recall] : lines[pos - 1];
+      const text = L ? (L.k === 'e' ? L.en.replace(/\[([^\]|]+)(?:\|[^\]]+)?\]/g, '$1') : L.t || '') : '';
+      return `${title} ${pos}行目：「${text.slice(0, 60)}」`;
+    },
+    after() {
+      if (recall !== null && !sparkled) { sparkled = true; spark(); }
+      if (!showLog) window.scrollTo(0, document.body.scrollHeight);
+    },
+    act: {
+      next: adv,
+      learn() { if (lockedNow()) return go('lock'); go('lesson', { ep }); },
+      log() { showLog = true; render(); },
+      closelog() { showLog = false; render(); },
+    },
+    tap(e) { if (!showLog && e.target.closest('.rd-stage, .rd-msg') && !e.target.closest('.gate, .end')) adv(); },
+    key(e) {
+      if (showLog) { if (e.key === 'Escape') { showLog = false; render(); } return; }
+      if (['Enter', ' ', 'ArrowDown', 'ArrowRight'].includes(e.key)) { e.preventDefault(); adv(); }
+    },
+  };
+};
+
+/* =========================================================
+   [S10] 覚える：単語カード → 練習1（意味）→ 練習2（例文）
+   ========================================================= */
+function cardBody(w) {
+  return `<section class="panel card"><p class="c-en en">${esc(w.en)} ${spk(w.en)}</p>
+      <p class="c-ja"><span class="tag">${w.pos}</span> ${esc(w.ja)}</p></section>
+    <div class="win"><span class="name toru">例文</span>
+      <p class="ex en">${exHTML(w)} ${spk(plain(w.ex), 'toru')}</p>
+      <p class="exja">${exJaHTML(w)}</p>
+      ${S.set.tk ? `<p class="tk">（${esc(w.tk)}）</p>` : ''}</div>`;
+}
+VIEWS.lesson = ({ ep }) => {
+  const list = epWords(ep);
+  let i = 0;
+  const v = {
+    focus: true, tab: 'story', scene: 'day',
+    html() {
+      return `${qHead(`第${epNo(ep)}話の単語`, i + 1, list.length)}
+        ${cardBody(list[i])}
+        <div class="row2"><button class="btn vn" data-act="prev" ${i ? '' : 'disabled'}>前へ</button><button class="btn vn main" data-act="cnext">${i < list.length - 1 ? '次へ' : '練習する'}</button></div>
+        <p class="sc-note">このあと、意味と例文で${list.length}語を確かめる。</p>`;
+    },
+    where() { return `第${epNo(ep)}話の単語 ${i + 1}/${list.length}（${list[i].en}）`; },
+    after() { TTS.say(list[i].en); },
+    act: {
+      prev() { if (i > 0) { i--; render(); } },
+      cnext() { if (i < list.length - 1) { i++; render(); } else startLessonQuiz(ep, list); },
+    },
+    key(e) {
+      if (e.key === 'Enter' || e.key === ' ' || e.key === 'ArrowRight') { e.preventDefault(); v.act.cnext(); }
+      else if (e.key === 'ArrowLeft') v.act.prev();
+    },
+  };
+  return v;
+};
+function startLessonQuiz(ep, list) {
+  const items = [
+    ...shuffle(list).map(w => ({ id: w.id, fmt: 'en2ja', round: 1 })),
+    ...shuffle(list).map(w => ({ id: w.id, fmt: 'cloze', round: 2 })),
+  ];
+  go('quiz', {
+    kind: 'lesson', title: '練習', requeue: true, items,
+    onDone() {
+      list.forEach(w => SRS.learned(w.id));
+      today().n += list.length;
+      epW(ep).learned = true;
+      save();
+      go('result', {
+        title: `${list.length}語、覚えた。`,
+        voice: 'あのセリフが、読める……！',
+        body: `<p class="en gate-words">${list.map(w => esc(w.en)).join(' · ')}</p><p class="note">明日、復習に出てくる。忘れると、訳がまた霞む。</p>`,
+        btns: [{ label: 'つづきを読む', fn: () => go('reader', { ep, fresh: list.map(w => w.id) }) }],
+      });
+    },
+  });
+}
+
+/* =========================================================
+   [S11] 問題（共通）
+   ---------------------------------------------------------
+   単語の形式：en2ja 英→意味 / ja2en 意味→英 / cloze 例文の空らん（選ぶ）/ listen 聞いて意味
+              write 文の中で書く / pick 語群から選んで書く / dictate 例文を聞いて書く
+   入試の形（NYUSHI）：gform 形の語群から書く / shiryo 資料を見て書く / read 読んでメモに1語 /
+              lmemo 聞いてメモに書く（2回まで）/ resp 対話の応答を選ぶ（1回だけ）
+   kind：lesson（段階は終わりにまとめて）/ review / test（やり直しなし）/ drill（入試の形で練習）/ practice（段階は動かさない）
+   書く問題は頭文字なし・綴りの完全一致（北海道の公立入試に合わせる）。ヒントは本人が押したときだけ出す。
+   まちがいは赤や×にしない。本人の答えを残したまま、合っている文字に線を引く（memory: learner-self-correction）
+   ========================================================= */
+const IRREG = { eat: 'ate', choose: 'chose', read: 'read', meet: 'met', speak: 'spoke', understand: 'understood', teach: 'taught', forget: 'forgot', stand: 'stood', write: 'wrote', send: 'sent', make: 'made', come: 'came', go: 'went', have: 'had', see: 'saw', get: 'got', take: 'took', give: 'gave', say: 'said', tell: 'told', think: 'thought', know: 'knew', leave: 'left', find: 'found', feel: 'felt', keep: 'kept', sit: 'sat', run: 'ran', begin: 'began', bring: 'brought', buy: 'bought', catch: 'caught', lose: 'lost', hear: 'heard' };
+const S_IRREG = { life: 'lives', child: 'children', man: 'men', woman: 'women', person: 'people', foot: 'feet', tooth: 'teeth', leaf: 'leaves', knife: 'knives', wife: 'wives' };
+const ING_IRREG = { forget: 'forgetting', sit: 'sitting', run: 'running', begin: 'beginning', get: 'getting', stop: 'stopping', swim: 'swimming', put: 'putting', plan: 'planning', die: 'dying', lie: 'lying' };
+/** 語形を作る（t：s＝3単現・複数／ed＝過去／ing） */
+function inflect(b, t) {
+  if (t === 's' && S_IRREG[b]) return S_IRREG[b];
+  if (t === 's') return /[^aeiou]y$/.test(b) ? b.slice(0, -1) + 'ies' : /(s|sh|ch|x|o)$/.test(b) ? b + 'es' : b + 's';
+  if (t === 'ed') return IRREG[b] || (/e$/.test(b) ? b + 'd' : /[^aeiou]y$/.test(b) ? b.slice(0, -1) + 'ied' : b + 'ed');
+  if (t === 'ing') return ING_IRREG[b] || (/ie$/.test(b) ? b.slice(0, -2) + 'ying' : /[^aeiou]e$/.test(b) ? b.slice(0, -1) + 'ing' : b + 'ing');
+  return b;
+}
+/** 例文の中の形が、もとの形からどう変わっているか */
+function formType(w) {
+  const f = exForm(w).toLowerCase(), b = w.en.toLowerCase();
+  if (f === b) return 'same';
+  for (const t of ['s', 'ed', 'ing']) if (f === inflect(b, t)) return t;
+  return 'other';
+}
+/** 形式のまとまり（記録の「形式ごとの正答率」） */
+const FGROUP = { en2ja: '選ぶ', ja2en: '選ぶ', cloze: '選ぶ', listen: '聞く', dictate: '聞く', lmemo: '聞く', resp: '聞く', write: '書く', pick: '書く', gform: '書く', shiryo: '書く', read: '読む' };
+const fkey = it => (it.fmt === 'ny' ? it.ny.t : it.fmt);
+/** 復習の形式：段階が上がるほど「書く」へ（道内の受験生は書くが課題：書く 38.5％・R8 分析） */
+function fmtFor(id) {
+  const s = ws(id).s, tts = TTS.can();
+  if (s <= 2) return pick(tts ? ['en2ja', 'listen', 'cloze'] : ['en2ja', 'cloze']);
+  if (s === 3) return pick(tts ? ['cloze', 'pick', 'dictate'] : ['cloze', 'pick']);
+  if (s === 4) return pick(['pick', 'write', 'ja2en']);
+  return pick(tts ? ['write', 'write', 'dictate'] : ['write']);
+}
+function resolveFmt(f) {
+  if (f === 'spell') return 'write';
+  if (!TTS.can() && f === 'listen') return 'en2ja';
+  if (!TTS.can() && f === 'dictate') return 'write';
+  return f;
+}
+function isNear(a, b) { return NEAR.some(p => p.includes(a) && p.includes(b)); }
+function overlaps(a, b) {
+  const ta = a.ja.split('、'), tb = b.ja.split('、');
+  return ta.some(x => tb.some(y => x.includes(y) || y.includes(x)));
+}
+/** まぎらわしくない別の語（同じ品詞を先に） */
+function distractors(w) {
+  const cands = WORDS.filter(x => x.id !== w.id && !isNear(x.id, w.id) && !overlaps(x, w));
+  return [...shuffle(cands.filter(x => x.pos === w.pos)), ...shuffle(cands.filter(x => x.pos !== w.pos))];
+}
+function makeChoices(w, fmt) {
+  const key = (fmt === 'en2ja' || fmt === 'listen') ? 'ja' : 'en';
+  const out = [], seen = new Set([w[key]]);
+  for (const x of distractors(w)) { if (out.length >= 3) break; if (seen.has(x[key])) continue; seen.add(x[key]); out.push(x); }
+  return shuffle([{ label: w[key], ok: true }, ...out.map(x => ({ label: x[key], ok: false }))]);
+}
+/** 語群（大問2問1型）：答えと同じ形にそろえた4語 */
+const NO_PLURAL = new Set(['information', 'today', 'tomorrow', 'home', 'rain', 'homework', 'music', 'advice', 'news', 'money', 'english', 'japanese', 'japan', 'one', 'two', 'three', 'lot', 'future', 'people']);
+function pickGroup(w) {
+  const ft = formType(w), form = exForm(w).toLowerCase();
+  const out = [/^[A-Z]/.test(w.en) ? exForm(w) : form], seen = new Set([form]);   // Japan などは大文字のまま見せる
+  // 過去形・ing の語群は動詞からだけ作る（名詞に ed を付けた語を並べない）。複数形にしない語（数えられない名詞・Japan など）は s を付けない
+  let pool = ft === 'ed' || ft === 'ing' ? distractors(w).filter(x => x.pos === '動') : distractors(w);
+  if (ft === 's') pool = pool.filter(x => !/^[A-Z]/.test(x.en) && !NO_PLURAL.has(x.id));
+  for (const x of pool) {
+    if (out.length >= 4) break;
+    const f = inflect(x.en, ft === 'other' ? 'same' : ft);
+    if (seen.has(f)) continue; seen.add(f); out.push(f);
+  }
+  return shuffle(out);
+}
+const norm = s => String(s || '').trim().toLowerCase().replace(/\s+/g, ' ').replace(/[.。]$/, '');
+const blankOf = s => esc(s).replace(/\[[^\]]+\]/, '<span class="blank">　</span>');
+const ansOf = s => s.match(/\[([^\]|]+)/)[1];
+const maskJa = w => esc(w.exJa).replace(/\{[^}]+\}/, '<span class="blank sm">　</span>');
+const groupHTML = g => `<div class="group"><span class="g-k">語群</span>${g.map(x => `<span class="en">${esc(x)}</span>`).join('')}</div>`;
+
+/** 問題の中身をそろえる：type＝choice（選ぶ）か write（書く）／ask＝指示文／body＝問い／ans＝書く答え／audio＝読み上げる英文 */
+function qSpec(it, Q) {
+  const w = WMAP[it.id];
+  const once = Q.kind === 'test' || Q.kind === 'drill';
+  const meaning = it.showMeaning ? `<p class="note">意味：${esc(w.ja)}</p>` : '';
+  switch (it.fmt) {
+    case 'en2ja': return { type: 'choice', ask: 'この単語の意味は？', body: `<p class="q-word en">${esc(w.en)} ${spk(w.en)}</p>` };
+    case 'ja2en': return { type: 'choice', ask: '英語で言うと？', body: `<p class="q-ja">${esc(w.ja)}</p>`, en: true };
+    case 'cloze': {
+      const base = exForm(w).toLowerCase() === w.en.toLowerCase();
+      return { type: 'choice', ask: `空らんに入る単語は？${base ? '' : '（もとの形で選ぼう）'}`, body: `<p class="q-ex en">${blankOf(w.ex)}</p><p class="exja">${exJaHTML(w)}</p>`, en: true };
+    }
+    case 'listen': return { type: 'choice', ask: once ? '聞こえた単語の意味は？（1回だけ）' : '聞こえた単語の意味は？', body: '', audio: w.en, who: '', plays: once ? 1 : 9 };
+    case 'write': return { type: 'write', ask: '文に合うように、□に入る英語1語を書こう', body: `<p class="q-ex en">${blankOf(w.ex)}</p><p class="exja">${maskJa(w)}</p>${meaning}`, ans: [exForm(w)], meaningBtn: !it.showMeaning };
+    case 'pick': return { type: 'write', ask: '□に入る最も適当な英語1語を、語群から選んで書こう', body: `<p class="q-ex en">${blankOf(w.ex)}</p><p class="exja">${maskJa(w)}</p>${groupHTML(it.group)}`, ans: [exForm(w)] };
+    case 'dictate': return { type: 'write', ask: '英文を聞いて、□に入る英語1語を書こう（2回まで）', body: `<p class="q-ex en">${blankOf(w.ex)}</p>`, ans: [exForm(w)], audio: plain(w.ex), who: 'toru', plays: 2 };
+    default: {
+      const n = it.ny;
+      if (n.t === 'gform') return { type: 'write', ask: '英文の□に入る最も適当な英語1語を、語群から選んで書こう', body: `<p class="q-ex en">${blankOf(n.q)}</p>${groupHTML(it.group)}`, ans: [ansOf(n.q)] };
+      if (n.t === 'shiryo') return { type: 'write', ask: '資料に合うように、□に入る英語1語を書こう', body: `<div class="doc"><p class="doc-t">${esc(n.title)}</p>${n.html}</div><p class="q-ex en">${blankOf(n.q)}</p>`, ans: [ansOf(n.q), ...(n.acc || [])] };
+      if (n.t === 'read') return { type: 'write', ask: '本文の内容から考えて、メモの□に入る英語1語を書こう', body: `<div class="doc"><p class="doc-t">${esc(n.title)}</p>${n.passage.map(p => `<p class="en">${esc(p)}</p>`).join('')}</div><div class="memo"><p class="doc-t">メモ</p><p class="en">${blankOf(n.q)}</p></div>`, ans: [ansOf(n.q), ...(n.acc || [])] };
+      if (n.t === 'lmemo') return { type: 'write', ask: '放送を聞いて、メモの□に入る英語1語を書こう（2回まで）', body: `<p class="scene">${esc(n.scene)}</p><div class="memo"><p class="doc-t">メモ</p><p class="en">${blankOf(n.q)}</p></div>`, ans: [ansOf(n.q), ...(n.acc || [])], audio: n.audio, who: n.who, plays: 2 };
+      return { type: 'choice', ask: '対話を聞いて、最後の発言への応答として最も適当なものを選ぼう（1回だけ）', body: `<p class="scene">${esc(n.scene)}</p>`, audio: n.audio, who: n.who, plays: 1, en: true };
+    }
+  }
+}
+function grade(Q, it, ok, first) {
+  const id = it.id;
+  if (Q.kind === 'lesson') { if (first) tally(id, ok); }
+  else if (Q.kind === 'review') { if (first) { ok ? SRS.ok(id) : SRS.ng(id); today().r++; } else if (ok) SRS.relearn(id); }
+  else if (Q.kind === 'test' || Q.kind === 'drill') { if (first) { ok ? SRS.ok(id) : SRS.ng(id); if (ok) Q.score++; } }
+  if (first) {
+    Q.answered++;
+    if (!ok) Q.missed.add(id);
+    if (Q.kind !== 'practice') { const g = FGROUP[fkey(it)]; const f = S.fs[g] || (S.fs[g] = { ok: 0, ng: 0 }); f[ok ? 'ok' : 'ng']++; }
+    if (it.sec) { const s = Q.secs[it.sec] || (Q.secs[it.sec] = { ok: 0, n: 0 }); s.n++; if (ok) s.ok++; }
+  }
+  save();
+}
+VIEWS.quiz = Q => {
+  Q.i = 0; Q.score = 0; Q.answered = 0; Q.missed = new Set(); Q.secs = {};
+  const cur = () => Q.items[Q.i];
+  function prepare(it) {
+    if (it.ready) return;
+    it.ready = true; it.fmt = resolveFmt(it.fmt); it.tries = 0; it.hint = 0; it.plays = 0; it.done = false;
+    const w = WMAP[it.id];
+    if (it.fmt === 'ny') {
+      if (it.ny.t === 'resp') it.choices = shuffle(it.ny.choices.map((label, k) => ({ label, ok: k === it.ny.ans })));
+      if (it.ny.t === 'gform') it.group = shuffle(it.ny.g);
+    } else if (it.fmt === 'pick') it.group = pickGroup(w);
+    else if (['en2ja', 'ja2en', 'cloze', 'listen'].includes(it.fmt)) it.choices = makeChoices(w, it.fmt);
+  }
+  function audioHTML(it, sp) {
+    if (!sp.audio) return '';
+    if (!TTS.can()) return `<p class="note">読み上げが使えないので、文字で読む：</p><p class="q-ex en">${esc(sp.audio)}</p>`;
+    const left = sp.plays - it.plays;
+    const label = sp.plays > 2 ? 'もう一度聞く' : left > 0 ? `放送を聞く（あと${left}回）` : '聞き終わった';
+    return `<div class="audio"><button class="btn ghost" data-act="play" id="playBtn" ${left > 0 && !it.done ? '' : 'disabled'}><span class="material-symbols-outlined" aria-hidden="true">volume_up</span> ${label}</button></div>`;
+  }
+  function choicesHTML(it, sp) {
+    return `<div class="choices">${it.choices.map((c, k) => {
+      const cls = it.done ? (c.ok ? ' right' : k === it.picked ? ' wrong' : '') : '';
+      const mine = it.done && !c.ok && k === it.picked ? ' <span class="tag">えらんだ</span>' : '';
+      return `<button class="choice${sp.en ? ' en' : ''}${cls}" data-act="choose" data-arg="${k}" ${it.done ? 'disabled' : ''}><span class="k">${k + 1}</span>${esc(c.label)}${mine}</button>`;
+    }).join('')}</div>`;
+  }
+  function writeHTML(it, sp) {
+    const ans = sp.ans[0];
+    const boxes = it.hint ? `<div class="letters" aria-hidden="true">${[...ans].map((ch, k) => `<span class="lt">${k < it.hint ? esc(ch) : ''}</span>`).join('')}</div>` : '';
+    if (it.done) return boxes;
+    let msg = '';
+    if (it.tries > 0) {
+      const att = [...it.last].map((ch, k) => ch.toLowerCase() === (ans[k] || '').toLowerCase() ? `<span class="m">${esc(ch)}</span>` : esc(ch)).join('');
+      msg = `<p class="attempt">${att}</p><p class="spell-msg">線のついた文字は合っている。直して、もう一度。</p>`;
+    }
+    const hints = [];
+    if (it.tries > 0 && it.hint < ans.length) hints.push('<button class="link" data-act="hint">ヒント（1文字見る）</button>');
+    if (it.tries >= 3 && it.hint < ans.length) hints.push('<button class="link" data-act="showall">お手本を見る</button>');
+    if (sp.meaningBtn) hints.push('<button class="link" data-act="meaning">意味を見る</button>');
+    return `${boxes}${msg}<form class="spell" data-form="write"><input id="sp" lang="en" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" value="${esc(it.last || '')}" aria-label="英語で書く"><button class="btn">答える</button></form>
+      ${hints.length ? `<p class="hints">${hints.join('')}</p>` : ''}`;
+  }
+  function fbHTML(w, it, sp) {
+    const good = it.ok || it.fixed;
+    const r = it.fixed ? '直せた。その調子' : it.ok ? (it.react || pick(REACT.ok)) : pick(REACT.ng);
+    const ansLine = sp.type === 'write' ? `<p class="fb-a">答え　<b class="en">${esc(sp.ans[0])}</b></p>` : '';
+    const script = sp.audio && it.fmt !== 'listen' ? `<p class="ex en">${esc(sp.audio)}</p>` : '';
+    const nyJa = it.fmt === 'ny' ? `<p class="exja">${esc(it.ny.ja)}</p>` : '';
+    const card = it.fmt === 'ny'
+      ? `<hr><p class="fb-w"><span class="en">${esc(w.en)}</span>${spk(w.en)}<span class="pos">${w.pos}</span>${esc(w.ja)}</p>`
+      : `<p class="fb-w"><span class="en">${esc(w.en)}</span>${spk(w.en)}<span class="pos">${w.pos}</span>${esc(w.ja)}</p>
+         <p class="ex en">${exHTML(w)} ${spk(plain(w.ex), 'toru')}</p><p class="exja">${exJaHTML(w)}</p>
+         ${S.set.tk ? `<p class="tk">（${esc(w.tk)}）</p>` : ''}`;
+    return `<div class="win fb ${good ? 'ok' : 'ng'}"><span class="name voice">心の声</span>
+      <p class="fb-r">${esc(r)}</p>${ansLine}${script}${nyJa}${card}
+      ${!good && Q.requeue && sp.type === 'choice' ? '<p class="note">この単語は、少しあとでもう一度出る。</p>' : ''}
+      <button class="btn vn main wide" data-act="next" id="nextBtn">次へ</button>
+    </div>`;
+  }
+  /** 正解の瞬間：上に通知（復習なら距離が縮まる） */
+  function cheer(it) {
+    it.react = pick(REACT.ok);
+    const p = document.createElement('div');
+    p.className = 'pop';
+    p.textContent = Q.kind === 'review' ? '♡ ふたりの距離が縮まった' : `♡ ${it.react}`;
+    document.body.appendChild(p);
+    setTimeout(() => p.remove(), 2500);
+  }
+  function next() {
+    if (!cur().done) return;
+    Q.i++;
+    if (Q.i >= Q.items.length) return Q.onDone(Q);
+    window.scrollTo(0, 0);
+    render();
+  }
+  function choose(k) {
+    const it = cur(); if (it.done || !it.choices) return;
+    const c = it.choices[Number(k)]; if (!c) return;
+    const first = !it.retry && it.tries === 0;
+    it.tries++; it.picked = Number(k); it.ok = c.ok; it.done = true;
+    grade(Q, it, c.ok, first);
+    if (c.ok) cheer(it);
+    if (!c.ok && Q.requeue) Q.items.splice(Math.min(Q.items.length, Q.i + 4), 0, { id: it.id, fmt: it.fmt, ny: it.ny, round: it.round, sec: it.sec, retry: true });
+    render();
+  }
+  function write(val) {
+    const it = cur(); if (it.done) return;
+    const sp = qSpec(it, Q), v = norm(val);
+    if (!v) return;
+    const first = !it.retry && it.tries === 0;
+    const right = sp.ans.some(a => norm(a) === v);
+    it.tries++; it.last = String(val).trim();
+    grade(Q, it, right, first);
+    if (right) { it.done = true; it.ok = first; it.fixed = !first; if (first) cheer(it); }
+    render();
+  }
+  function play() {
+    const it = cur(), sp = qSpec(it, Q);
+    if (!sp.audio || it.plays >= sp.plays) return;
+    it.plays++;
+    TTS.say(sp.audio, sp.who);
+    const b = $('#playBtn');
+    if (b) { const left = sp.plays - it.plays; b.disabled = left <= 0; b.lastChild.textContent = sp.plays > 2 ? ' もう一度聞く' : left > 0 ? ` 放送を聞く（あと${left}回）` : ' 聞き終わった'; }
+  }
+  const v = {
+    focus: true, Q, scene: 'day',
+    spec: () => qSpec(cur(), Q),
+    where() { const it = cur(); return `${Q.title}${it.sec ? ' ' + it.sec : ''} ${Q.i + 1}問目（${it.id}・${fkey(it)}）`; },
+    html() {
+      const it = cur(); prepare(it);
+      const w = WMAP[it.id], sp = qSpec(it, Q);
+      const label = Q.kind === 'lesson' ? (it.round === 1 ? '練習1　意味を選ぶ' : '練習2　例文で選ぶ') : it.sec ? `${Q.title}　${it.sec}` : Q.title;
+      let body = `<section class="panel"><p class="q-ask">${esc(sp.ask)}</p>${audioHTML(it, sp)}${sp.body}${sp.type === 'write' ? writeHTML(it, sp) : ''}</section>${sp.type === 'choice' ? choicesHTML(it, sp) : ''}`;
+      if (it.done) body += fbHTML(w, it, sp);
+      return qHead(label, Q.i + 1, Q.items.length) + body;
+    },
+    after() {
+      const it = cur(), sp = qSpec(it, Q);
+      // 何度でも聞ける単語だけ自動で流す。回数が決まった放送は、問いを読んでから本人が押す（本番の下読みと同じ）
+      if (sp.audio && sp.plays > 2 && TTS.can() && !it.autoplayed && !it.done) { it.autoplayed = true; play(); }
+      if (it.done) { const b = $('#nextBtn'); if (b) b.scrollIntoView({ block: 'nearest' }); }
+      else if (sp.type === 'write') { const inp = $('#sp'); if (inp) inp.focus(); }
+    },
+    act: {
+      choose, next, play,
+      hint() { const it = cur(); it.hint++; render(); },
+      showall() { const it = cur(); it.hint = qSpec(it, Q).ans[0].length; render(); },
+      meaning() { cur().showMeaning = true; render(); },
+    },
+    input(e) { if (e.target.id === 'sp') cur().last = e.target.value; },
+    submit() { const inp = $('#sp'); if (inp) write(inp.value); },
+    key(e) {
+      const it = cur();
+      if (e.target && e.target.id === 'sp') return;
+      if (!it.done && /^[1-4]$/.test(e.key) && it.choices) { e.preventDefault(); choose(Number(e.key) - 1); }
+      else if (it.done && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); next(); }
+    },
+  };
+  return v;
+};
+VIEWS.result = R => ({
+  focus: true, scene: 'eve',
+  html() {
+    return `<section class="panel result"><h2>${esc(R.title)}</h2>${R.body || ''}</section>
+      ${R.voice ? `<div class="win"><span class="name voice">心の声</span><p class="v">${esc(R.voice)}</p></div>` : ''}
+      <div class="menu">${R.btns.map((b, k) => `<button class="btn vn${k === 0 ? ' main' : ''}" data-act="rb" data-arg="${k}">${esc(b.label)}</button>`).join('')}</div>`;
+  },
+  act: { rb(k) { R.btns[Number(k)].fn(); } },
+  key(e) { if (e.key === 'Enter') { e.preventDefault(); R.btns[0].fn(); } },
+});
+function startReview() {
+  const due = SRS.due().slice(0, REVIEW_MAX);
+  if (!due.length) return toast('いま復習する単語はない');
+  const d0 = distance();
+  go('quiz', {
+    kind: 'review', title: '復習', requeue: true,
+    items: shuffle(due).map(w => ({ id: w.id, fmt: fmtFor(w.id) })),
+    onDone(Q) {
+      const rest = SRS.due().length, d1 = distance();
+      const missed = [...Q.missed].map(id => WMAP[id].en);
+      go('result', {
+        title: `${Q.answered}語、復習した。`,
+        voice: '霞んでいた言葉が、戻ってきた。',
+        body: `<p>ふたりの距離　${d0.toFixed(1)} m → <b>${d1.toFixed(1)} m</b></p>
+          ${missed.length ? `<p class="note">一度まちがえた単語：${missed.join('、')}（明日また出る）</p>` : ''}
+          ${rest ? `<p class="note">まだ ${rest}語 残っている。</p>` : ''}`,
+        btns: rest ? [{ label: `つづけて復習（${rest}語）`, fn: startReview }, { label: 'ホームへ', fn: () => go('home'), ghost: true }]
+                   : [{ label: 'ホームへ', fn: () => go('home') }],
+      });
+    },
+  });
+}
+/** 入試の形の問題を、章の単語から組み立てる。並びは本番と同じ（聞く → 語と文 → 読む） */
+const nyItems = (c, t) => (NYUSHI[c.id] || []).filter(x => x.t === t).map(x => ({ id: x.w, fmt: 'ny', ny: x }));
+function buildTest(c) {
+  const tts = TTS.can();
+  const take = (t, n) => shuffle(nyItems(c, t)).slice(0, n);
+  const used = new Set((NYUSHI[c.id] || []).map(x => x.w));
+  const pool = shuffle(chWords(c));
+  const words = n => {
+    const out = pool.filter(w => !used.has(w.id)).slice(0, n);
+    while (out.length < n) out.push(pick(pool));
+    out.forEach(w => used.add(w.id));
+    return out;
+  };
+  const sec = (label, arr) => arr.map(x => Object.assign(x, { sec: label }));
+  return [
+    ...sec('大問1 聞く', [...words(2).map(w => ({ id: w.id, fmt: tts ? 'listen' : 'en2ja' })), ...take('resp', 2), ...take('lmemo', 2), ...words(1).map(w => ({ id: w.id, fmt: tts ? 'dictate' : 'write' }))]),
+    ...sec('大問2 語と文', [...take('gform', 2), ...words(2).map(w => ({ id: w.id, fmt: 'pick' })), ...take('shiryo', 2)]),
+    ...sec('大問3 読む', take('read', 2)),
+    ...sec('単語', [...words(2).map(w => ({ id: w.id, fmt: 'en2ja' })), ...words(2).map(w => ({ id: w.id, fmt: 'ja2en' })), ...words(1).map(w => ({ id: w.id, fmt: 'write' }))]),
+  ];
+}
+function secTable(Q) {
+  return `<table class="kv">${Object.entries(Q.secs).map(([k, s]) => `<tr><td>${esc(k)}</td><td>${s.ok} / ${s.n}</td></tr>`).join('')}</table>`;
+}
+function startTest(cid) {
+  const c = CHAPTERS.find(x => x.id === cid);
+  if (!c || !chTestReady(c)) return toast('全部の話を読むと受けられる');
+  const items = buildTest(c);
+  go('quiz', {
+    kind: 'test', title: `${chName(c)} 章末テスト`, requeue: false, items,
+    onDone(Q) {
+      const n = items.length, need = Math.ceil(n * PASS_RATE), pass = Q.score >= need;
+      const rec = S.chs[c.id] || (S.chs[c.id] = { cleared: false, best: 0, tries: 0 });
+      rec.tries++; rec.best = Math.max(rec.best, Q.score); if (pass) rec.cleared = true;
+      save();
+      const missed = [...Q.missed].map(id => WMAP[id].en);
+      const nc = CHAPTERS[CHAPTERS.indexOf(c) + 1];
+      const btns = [];
+      if (pass && c.bonus) btns.push({ label: `${c.bonus.title}を読む`, fn: () => go('reader', { bonus: c.bonus }) });
+      if (pass && nc && nc.eps) btns.push({ label: `${chName(nc)}へ`, fn: () => openEp(nc.eps[0].id), ghost: btns.length > 0 });
+      if (!pass) btns.push({ label: '復習する', fn: startReview });
+      btns.push({ label: 'ホームへ', fn: () => go('home'), ghost: true });
+      go('result', {
+        title: pass ? `合格。${Q.score} / ${n}` : `${Q.score} / ${n}。合格は${need}問`,
+        voice: pass ? '合格……！ 次の章が、読める。' : '解釈違い……じゃなくて、あと少し。',
+        body: `${secTable(Q)}
+          ${missed.length ? `<p class="note">まちがえた単語：${missed.join('、')}（復習に回った）</p>` : '<p class="note">全問正解。殿堂入りへの道。</p>'}
+          ${!pass ? '<p class="note">まちがえた単語を復習してから、もう一度受けよう。</p>' : ''}`,
+        btns,
+      });
+    },
+  });
+}
+/** 入試の形で練習：その章の入試の形の問題を全部、本番の順で */
+function startDrill(cid) {
+  const c = CHAPTERS.find(x => x.id === cid);
+  if (!c || !chTestReady(c)) return toast('全部の話を読むと解ける');
+  const tts = TTS.can();
+  const sec = (label, arr) => arr.map(x => Object.assign(x, { sec: label }));
+  const items = [
+    ...sec('大問1 聞く', [...nyItems(c, 'resp'), ...nyItems(c, 'lmemo')]),
+    ...sec('大問2 語と文', [...nyItems(c, 'gform'), ...nyItems(c, 'shiryo')]),
+    ...sec('大問3 読む', nyItems(c, 'read')),
+  ];
+  go('quiz', {
+    kind: 'drill', title: `${chName(c)} 入試の形`, requeue: false, items,
+    onDone(Q) {
+      go('result', {
+        title: `${Q.score} / ${items.length}`,
+        voice: Q.score === items.length ? '入試の形でも、読める。書ける。尊い。' : '本番は頭文字のヒントがない。綴りまで、もう一歩。',
+        body: `${secTable(Q)}${tts ? '' : '<p class="note">この端末は読み上げが使えないので、聞く問題は文字で読んだ。</p>'}
+          <p class="note">北海道の公立入試の英語：聞く35点・語と文16点・読む37点・英作文12点（R6〜R8）。</p>`,
+        btns: [{ label: 'もう一度', fn: () => startDrill(cid) }, { label: 'ホームへ', fn: () => go('home'), ghost: true }],
+      });
+    },
+  });
+}
+function startPractice() {
+  const list = WORDS.filter(w => { const st = S.words[w.id]; return st && st.s >= 1 && st.ng > 0; })
+    .sort((a, b) => S.words[b.id].ng - S.words[a.id].ng).slice(0, 10);
+  if (!list.length) return toast('苦手な単語はまだない');
+  go('quiz', {
+    kind: 'practice', title: '苦手を練習', requeue: true,
+    items: shuffle(list).map(w => ({ id: w.id, fmt: pick(['en2ja', 'ja2en', 'cloze', 'pick', 'write']) })),
+    onDone() { go('result', { title: 'おつかれさま。', voice: '苦手は、伸びしろ。', body: '<p class="note">練習では記憶の段階は動かない。復習の日に、もう一度確かめよう。</p>', btns: [{ label: '単語帳へ', fn: () => go('words') }, { label: 'ホームへ', fn: () => go('home'), ghost: true }] }); },
+  });
+}
+
+/* =========================================================
+   [S12] 単語帳
+   ========================================================= */
+VIEWS.words = () => {
+  let f = 'all', q = '', open = null;
+  function listHTML() {
+    let list = WORDS.filter(w => (S.words[w.id] || {}).s >= 1);
+    if (f === 'fade') list = list.filter(w => SRS.vis(w.id) === 'fade');
+    if (f === 'weak') list = list.filter(w => S.words[w.id].ng > 0).sort((a, b) => S.words[b.id].ng - S.words[a.id].ng);
+    if (f === 'new') list = list.filter(w => S.words[w.id].s <= 3);
+    const qq = q.trim().toLowerCase();
+    if (qq) list = list.filter(w => w.en.includes(qq) || w.ja.includes(q.trim()));
+    if (!list.length) return '<p class="note">ここに出る単語はまだない。</p>';
+    return list.map(w => {
+      const st = S.words[w.id];
+      const detail = open === w.id ? `<div class="wdetail">
+        <p class="ex en">${exHTML(w)} ${spk(plain(w.ex), 'toru')}</p>
+        <p class="exja">${exJaHTML(w)}</p>
+        ${S.set.tk ? `<p class="tk">（${esc(w.tk)}）</p>` : ''}
+        <p class="meta">${w.pos}　正解 ${st.ok}・まちがい ${st.ng}　次の復習 ${st.s >= 2 ? md(st.due) : 'すぐ'}　出てくる話：第${w.ep.replace('-', '章 第')}話</p>
+      </div>` : '';
+      return `<div class="wrow"><button class="wbtn" data-act="wopen" data-arg="${w.id}"><span class="en">${esc(w.en)}</span><span class="ja">${esc(w.ja)}</span>${stageTag(w.id)}</button>${detail}</div>`;
+    }).join('');
+  }
+  return {
+    tab: 'words', scene: 'day',
+    html() {
+      const met = WORDS.filter(w => (S.words[w.id] || {}).s >= 1).length;
+      const weak = WORDS.some(w => (S.words[w.id] || {}).ng > 0 && (S.words[w.id] || {}).s >= 1);
+      const tabs = [['all', 'すべて'], ['fade', '霞んでいる'], ['weak', '苦手'], ['new', '覚えたて']]
+        .map(([k, l]) => `<button class="${f === k ? 'on' : ''}" data-act="filter" data-arg="${k}">${l}</button>`).join('');
+      return `<section class="panel"><p class="note">出会った単語 ${met}語 ／ 収録 ${WORDS.length}語（全体設計 ${PLANNED_TOTAL.toLocaleString()}語）</p>
+        <div class="subtabs">${tabs}</div>
+        <input class="search" type="search" placeholder="英語か意味でさがす" value="${esc(q)}" aria-label="さがす">
+        <div id="wlist">${listHTML()}</div>
+        ${weak ? '<button class="btn ghost wide" data-act="practice">苦手を練習する（10語まで）</button>' : ''}</section>`;
+    },
+    act: {
+      filter(k) { f = k; open = null; render(); },
+      wopen(id) { open = open === id ? null : id; $('#wlist').innerHTML = listHTML(); },
+    },
+    input(e) { if (e.target.classList.contains('search')) { q = e.target.value; $('#wlist').innerHTML = listHTML(); } },
+  };
+};
+
+/* =========================================================
+   [S13] 記録
+   ========================================================= */
+VIEWS.record = () => ({
+  tab: 'record', scene: 'day',
+  html() {
+    const left = daysLeft(), learned = learnedCount();
+    const pace = left > 0 ? Math.ceil(Math.max(0, PLANNED_TOTAL - learned) / left) : 0;
+    const cnt = { unk: 0, s1: 0, s2: 0, s4: 0, s7: 0, fade: 0 };
+    WORDS.forEach(w => {
+      const st = S.words[w.id];
+      if (!st || st.s < 1) cnt.unk++;
+      else if (st.s >= 2 && isDue(st)) cnt.fade++;
+      else if (st.s === 1) cnt.s1++;
+      else if (st.s <= 3) cnt.s2++;
+      else if (st.s <= 6) cnt.s4++;
+      else cnt.s7++;
+    });
+    const days = [...Array(14)].map((_, k) => dayStart(now()) - (13 - k) * DAY);
+    const vals = days.map(d => { const l = S.log[ymd(d)]; return l ? l.n + l.r : 0; });
+    const max = Math.max(10, ...vals);
+    let ok = 0, ng = 0; WORDS.forEach(w => { const st = S.words[w.id]; if (st) { ok += st.ok; ng += st.ng; } });
+    const weak = WORDS.filter(w => (S.words[w.id] || {}).ng > 0).sort((a, b) => S.words[b.id].ng - S.words[a.id].ng).slice(0, 5);
+    const chs = CHAPTERS.filter(c => c.eps).map(c => {
+      const done = c.eps.filter(ep => epSt(ep).done).length, rec = S.chs[c.id];
+      return `<tr><td>${chName(c)}「${esc(c.title)}」</td><td>${done}/${c.eps.length}話　${chCleared(c) ? `合格 ${rec.best}点` : rec ? `最高 ${rec.best}点` : 'テスト前'}</td></tr>`;
+    }).join('');
+    return `<section class="box"><h3>入試までの計画</h3>
+        <table class="kv">
+          <tr><td>入試の日</td><td>${esc(S.set.exam)}${left >= 0 ? `（あと${left}日）` : ''}</td></tr>
+          <tr><td>覚えた単語</td><td>${learned}語</td></tr>
+          <tr><td>収録 ／ 全体設計</td><td>${WORDS.length}語 ／ ${PLANNED_TOTAL.toLocaleString()}語</td></tr>
+          <tr><td>全体設計に届く1日のペース</td><td>${left > 0 ? `${pace}語（${(pace / 10).toFixed(1)}話）` : '―'}</td></tr>
+        </table>
+        <p class="note">いま収録しているのは第1章と第2章（全12章）。単語は入試の出る順（data/出る順.tsv）。</p></section>
+      <section class="box"><h3>記憶の段階</h3>
+        <table class="kv">
+          <tr><td>殿堂入り（60日あけても言える）</td><td>${cnt.s7}</td></tr>
+          <tr><td>定着</td><td>${cnt.s4}</td></tr>
+          <tr><td>覚えたて</td><td>${cnt.s2}</td></tr>
+          <tr><td>霞んでいる（復習の日が来た）</td><td>${cnt.fade}</td></tr>
+          <tr><td>うろ覚え</td><td>${cnt.s1}</td></tr>
+          <tr><td>まだ出会っていない</td><td>${cnt.unk}</td></tr>
+        </table></section>
+      <section class="box"><h3>この2週間（覚えた＋復習した語数）</h3>
+        <div class="bars">${vals.map(v => `<i class="${v ? '' : 'zero'}" style="height:${Math.max(2, v / max * 100)}%" title="${v}語"></i>`).join('')}</div>
+        <div class="bar-lbl">${days.map(d => `<span>${new Date(d).getDate()}</span>`).join('')}</div>
+        <p class="note">連続 ${streak()}日　はじめの答えの正答率 ${ok + ng ? Math.round(ok / (ok + ng) * 100) : 0}%</p></section>
+      <section class="box"><h3>入試の英語（北海道の公立・R6〜R8）と、尊単で練習する形</h3>
+        <table class="kv txt">
+          <tr><td>大問1 聞く（35点）</td><td>聞いて意味・応答（1回だけ）／聞いてメモに書く（2回）</td></tr>
+          <tr><td>大問2 語と文（16点）</td><td>語群から選んで書く／資料を見て書く</td></tr>
+          <tr><td>大問3 読む（37点）</td><td>英文を読んでメモに1語</td></tr>
+          <tr><td>大問4 英作文（12点）</td><td>書ける語を増やす（24語の英作文は次の段階）</td></tr>
+        </table>
+        <p class="note">本番の書く問題は頭文字のヒントがなく、綴りが完全に合わないと点にならない。道内の受験生は「書く」の正答率が 38.5％（R8・道教委の分析）。</p>
+        <table class="kv">${['選ぶ', '聞く', '書く', '読む'].map(g => { const f = S.fs[g] || { ok: 0, ng: 0 }, n = f.ok + f.ng; return `<tr><td>${g}の正答率</td><td>${n ? `${Math.round(f.ok / n * 100)}％（${n}問）` : '―'}</td></tr>`; }).join('')}</table></section>
+      <section class="box"><h3>苦手な単語</h3>
+        ${weak.length ? `<table class="kv">${weak.map(w => `<tr><td><span class="en">${esc(w.en)}</span>　${esc(w.ja)}</td><td>${S.words[w.id].ng}回</td></tr>`).join('')}</table>` : '<p class="note">まだない。</p>'}</section>
+      <section class="box"><h3>物語</h3><table class="kv">${chs}</table></section>`;
+  },
+});
+
+/* =========================================================
+   [S14] 設定
+   ========================================================= */
+VIEWS.settings = () => {
+  let armed = false, armedImp = false;
+  return {
+    tab: 'settings', scene: 'day',
+    html() {
+      return `<div class="set">
+        <section class="box"><h3>入試の日</h3>
+          <input type="date" data-set="exam" value="${esc(S.set.exam)}" aria-label="入試の日">
+          <p class="note">北海道の公立高校入試（2027年）の学力検査は3月3日（令和9年度 道立高等学校一般入学者選抜実施要項・道教委 2026-09-30）。英語は 14:50〜15:45。自分の受ける日を入れる。</p></section>
+        <section class="box"><h3>読み上げ</h3>
+          <label><input type="checkbox" data-set="tts" ${S.set.tts ? 'checked' : ''}> 英語を読み上げる</label>
+          <label><input type="checkbox" data-set="voice" ${S.set.voice ? 'checked' : ''}> 物語の中で、透の英語のセリフを自動で読み上げる（ボイス）</label>
+          <label>速さ <select data-set="rate">${[[0.7, 'ゆっくり'], [0.9, 'ふつう'], [1.05, '速め']].map(([v, l]) => `<option value="${v}" ${Number(S.set.rate) === v ? 'selected' : ''}>${l}</option>`).join('')}</select></label>
+          ${TTS.available() ? '' : '<p class="note">この端末では読み上げが使えない。聞く問題は「意味を選ぶ」に変わる。</p>'}</section>
+        <section class="box"><h3>音声のテスト</h3>
+          <p class="note">音声ファイル：${TTS.files() ? `入っている（${Object.keys(TTS.files()).length}本）。ボタンの読み上げはこれを鳴らす` : '入っていない（端末の読み上げを使う）'}</p>
+          <button class="btn ghost" data-act="ttsFile" ${TTS.files() ? '' : 'disabled'}>音声ファイルを鳴らす</button>
+          <button class="btn ghost" data-act="ttsDevice">端末の読み上げを試す</button>
+          <p class="note" id="ttsResult" aria-live="polite">鳴らないときは、端末の音量・消音のスイッチ・イヤホンを確かめる。結果がここに出る。</p></section>
+        <section class="box"><h3>心の声</h3>
+          <label><input type="checkbox" data-set="tk" ${S.set.tk ? 'checked' : ''}> 単語カードと答えのあとに、心の声（ツッコミ）を出す</label></section>
+        <section class="box"><h3>記録の引っ越し</h3>
+          <p class="note">記録はこの端末のブラウザだけに残る。別の端末へ移すときは、書き出した文字を向こうで読みこむ。</p>
+          <button class="btn ghost" data-act="exp">書き出す</button>
+          <button class="btn ghost" data-act="imp">${armedImp ? '上書きして読みこむ（もう一度押す）' : '読みこむ'}</button>
+          <textarea id="io" rows="4" placeholder="ここに書き出される／ここに貼って読みこむ" aria-label="記録の文字"></textarea></section>
+        <section class="box"><h3>テストプレイ</h3>
+          <p class="note">いまはテスト版（${APP_VERSION}）。読みにくい・分かりにくい・動かない・もっとこうしてほしい・尊かった……なんでも送ってね。<b>名前は書かないでね。</b></p>
+          <button class="btn ghost" data-act="fb">気づいたことを送る</button>
+          <p class="note">記録はこの端末のこのブラウザだけに残る。新しい版になっても、記録はそのまま続く。</p></section>
+        <section class="box"><h3>最初から</h3>
+          <button class="btn ghost" data-act="reset">${armed ? '本当に全部消す（もう一度押す）' : '記録を全部消す'}</button></section>
+        <details class="box"><summary>デバッグログ（うまく動かないとき、これを先生に送る）</summary>
+          <pre>${esc(LOGS.join('\n') || 'まだ何もない')}</pre>
+          <button class="btn ghost" data-act="copylog">コピー</button></details>
+        <p class="ver">尊単 ${APP_VERSION}（${BUILD}）　収録 ${WORDS.length}語${DEV ? '　確認モード' : ''}</p>
+      </div>`;
+    },
+    change(e) {
+      const k = e.target.dataset.set; if (!k) return;
+      if (k === 'exam') S.set.exam = e.target.value;
+      else if (k === 'rate') S.set.rate = Number(e.target.value);
+      else S.set[k] = e.target.checked;
+      save(); updateHeader(); toast('保存した');
+    },
+    act: {
+      exp() { const io = $('#io'); io.value = JSON.stringify(S); io.select(); try { navigator.clipboard.writeText(io.value).then(() => toast('コピーした'), () => {}); } catch (e) { /* 手でコピーしてもらう */ } },
+      imp() {
+        const raw = $('#io').value.trim();
+        if (!raw) return toast('先に、書き出した文字を貼る');
+        let d; try { d = JSON.parse(raw); } catch (e) { return toast('文字が正しくない（全部貼れているか確かめる）'); }
+        if (!d || typeof d.words !== 'object' || typeof d.set !== 'object') return toast('尊単の記録ではないみたい');
+        if (!armedImp) { armedImp = true; const keep = raw; render(); $('#io').value = keep; return; }
+        S = Object.assign(DEFAULT(), d); S.set = Object.assign(DEFAULT().set, d.set); save(); toast('読みこんだ'); go('home');
+      },
+      reset() {
+        if (!armed) { armed = true; render(); return; }
+        S = DEFAULT(); save(); toast('最初からになった'); go('home');
+      },
+      ttsFile() { const out = m => { const r = $('#ttsResult'); if (r) r.textContent = `音声ファイル：${m}`; S.audioTest = `テスト：音声ファイル ${m}`; save(); }; const f = TTS.files(); const k = f && (f['us|library'] ? 'us|library' : Object.keys(f)[0]); if (!k) return out('入っていない'); out('鳴らしている……'); TTS.play('audio/' + f[k], out); },
+      ttsDevice() { const out = m => { const r = $('#ttsResult'); if (r) r.textContent = `端末の読み上げ：${m}`; S.audioTest = `テスト：端末の読み上げ ${m}`; save(); }; out(`試している……（英語の声 ${TTS.voices.filter(v => /^en/i.test(v.lang)).length}個）`); TTS.speak('Hello. This is a test.', '', out); },
+      copylog() { try { navigator.clipboard.writeText(LOGS.join('\n')).then(() => toast('コピーした')); } catch (e) { toast('コピーできない。選んで手でコピーする'); } },
+    },
+  };
+};
+
+/* =========================================================
+   [S15] 検証用の入口（ブラウザのコンソールから）
+   TT.lint() データの点検 / TT.shift(日数) 日をずらす / TT.answer(true|false) いまの問題に答える
+   ========================================================= */
+function lint() {
+  const errs = [], ids = new Set();
+  const epIndex = id => EPS.findIndex(e => e.id === id);
+  WORDS.forEach(w => {
+    if (ids.has(w.id)) errs.push(`単語の重複 ${w.id}`); ids.add(w.id);
+    if ((w.ex.match(/\[[^\]]+\]/g) || []).length !== 1) errs.push(`${w.id}: 例文の [ ] が1つでない`);
+    if ((w.exJa.match(/\{[^}]+\}/g) || []).length !== 1) errs.push(`${w.id}: 例文の訳の { } が1つでない`);
+    if (!exForm(w).toLowerCase().startsWith(w.en.slice(0, 2).toLowerCase()) && formType(w) === 'other') errs.push(`${w.id}: 例文の [${exForm(w)}] が単語と合わない？`);
+    if (epIndex(w.ep) < 0) errs.push(`${w.id}: 話 ${w.ep} が無い`);
+  });
+  const check = (lines, where, upto) => lines.forEach((L, i) => {
+    if (L.k !== 'e') return;
+    const en = [...L.en.matchAll(/\[([^\]|]+)(?:\|([^\]]+))?\]/g)].map(m => (m[2] || m[1]).toLowerCase());
+    const ja = [...L.ja.matchAll(/\{([^}|]+)\|[^}]+\}/g)].map(m => m[1]);
+    en.forEach(id => {
+      if (!WMAP[id]) errs.push(`${where}#${i}: 英文の ${id} が単語に無い`);
+      else if (epIndex(WMAP[id].ep) > upto) errs.push(`${where}#${i}: ${id} はこの先の話の単語`);
+      if (!ja.includes(id)) errs.push(`${where}#${i}: 訳に ${id} の枠が無い`);
+    });
+    ja.forEach(id => { if (!en.includes(id)) errs.push(`${where}#${i}: 英文に ${id} の印が無い`); });
+  });
+  EPS.forEach((ep, k) => {
+    const g = ep.lines.filter(L => L.k === 'gate').length;
+    if (g !== 1) errs.push(`${ep.id}: ゲートが ${g} 個`);
+    if (!epWords(ep).length) errs.push(`${ep.id}: 単語が0`);
+    check(ep.lines, ep.id, k);
+    const used = new Set(ep.lines.filter(L => L.k === 'e').flatMap(L => [...L.ja.matchAll(/\{([^}|]+)\|/g)].map(m => m[1])));
+    epWords(ep).forEach(w => { if (!used.has(w.id)) errs.push(`${ep.id}: ${w.id} が物語に出てこない`); });
+  });
+  CHAPTERS.filter(c => c.bonus).forEach(c => check(c.bonus.lines, `${c.id}おまけ`, EPS.indexOf(c.eps[c.eps.length - 1])));
+  Object.entries(NYUSHI).forEach(([cid, list]) => {
+    const c = CHAPTERS.find(x => x.id === cid);
+    if (!c || !c.eps) { errs.push(`入試の形 ${cid}: 章が無い`); return; }
+    list.forEach((n, i) => {
+      const where = `入試の形 ${cid}#${i}(${n.t})`;
+      if (!WMAP[n.w]) errs.push(`${where}: 単語 ${n.w} が無い`);
+      else if (!chWords(c).includes(WMAP[n.w])) errs.push(`${where}: ${n.w} はこの章の単語でない`);
+      if (!n.ja) errs.push(`${where}: 訳 ja が無い`);
+      if (n.t === 'resp') { if (!Array.isArray(n.choices) || n.choices.length !== 4 || !(n.ans >= 0 && n.ans < 4)) errs.push(`${where}: 選択肢か答えがおかしい`); if (!n.audio) errs.push(`${where}: 放送文が無い`); return; }
+      if ((n.q.match(/\[[^\]]+\]/g) || []).length !== 1) { errs.push(`${where}: [ ] が1つでない`); return; }
+      const a = ansOf(n.q).toLowerCase();
+      if (!a.startsWith(n.w.slice(0, 2))) errs.push(`${where}: 答え ${a} が単語 ${n.w} と合わない？`);
+      if (n.t === 'gform' && (n.g.length !== 4 || !n.g.includes(a))) errs.push(`${where}: 語群が4語でないか、答えが無い`);
+      if (n.t === 'lmemo' && !n.audio.toLowerCase().includes(a)) errs.push(`${where}: 放送文に答え ${a} が出てこない`);
+    });
+  });
+  WORDS.forEach(w => { const g = pickGroup(w); if (g.length !== 4) errs.push(`${w.id}: 語群が4語そろわない`); });
+  return errs;
+}
+window.TT = {
+  get S() { return S; }, WORDS, CHAPTERS, lint,
+  view: () => VIEW && VIEW.name,
+  shift(days) { TIME_SHIFT += days; go(VIEW && VIEW.focus ? 'home' : (VIEW ? VIEW.name : 'home')); return ymd(now()); },
+  q() { if (!VIEW || VIEW.name !== 'quiz') return null; const it = VIEW.Q.items[VIEW.Q.i]; return { id: it.id, fmt: it.fmt, done: it.done, i: VIEW.Q.i, n: VIEW.Q.items.length }; },
+  /** いまの画面を1つ進める（問題なら ok で正解/まちがいを答える。答えたあとなら次へ） */
+  answer(ok = true) {
+    const v = VIEW; if (!v) return null;
+    if (v.name === 'quiz') {
+      const it = v.Q.items[v.Q.i];
+      if (it.done) v.act.next();
+      else if (v.spec().type === 'write') { const inp = $('#sp'); inp.value = ok ? v.spec().ans[0] : 'zzz'; v.submit(); }
+      else v.act.choose(it.choices.findIndex(c => c.ok === ok));
+    } else if (v.name === 'lesson') v.act.cnext();
+    else if (v.name === 'reader') { if (v.act.next) v.act.next(); }
+    else if (v.name === 'result') v.act.rb(0);
+    return v.name;
+  },
+  /** 正解で n 回進める */
+  run(n = 1, ok = true) { let last; for (let k = 0; k < n; k++) last = this.answer(ok); return VIEW.name; },
+  reset() { try { localStorage.removeItem(KEY); } catch (e) { /* なにもしない */ } S = DEFAULT(); TIME_SHIFT = 0; go('home'); },
+  errors: () => LOGS.filter(l => / error /.test(l)),
+};
+
+/* =========================================================
+   [S16] 起動
+   ========================================================= */
+/** 場面の部品（窓・光・本棚・雨・灯り）。どれを出すかは CSS が場面ごとに決める */
+(function buildScene() {
+  const sc = $('#scene');
+  let shelf = '';
+  for (let row = 0; row < 2; row++) {
+    for (let i = 0; i < 22; i++) shelf += `<i style="width:${6 + ((i + row * 5) * 7) % 7}px;height:${48 + ((i + row * 3) * 13) % 20}px"></i>`;
+    shelf += '<b></b>';
+  }
+  sc.innerHTML = `<div class="lamp"></div><div class="beam b1"></div><div class="beam b2"></div><div class="beam b3"></div><div class="sash"></div><div class="shelf">${shelf}</div><div class="rain"></div>`;
+})();
+try {
+  load();
+  TTS.init();
+  go('home');
+  const bad = lint();
+  if (bad.length) console.warn('データの点検で見つかったこと', bad);
+} catch (e) {
+  console.error(e);
+  app.innerHTML = `<section class="box"><h2>起動できなかった</h2><p class="note">設定のデバッグログ、またはこの文を先生に送る：${esc(e.message)}</p></section>`;
+}
+</script>
+</body>
+</html>
