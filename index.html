@@ -189,6 +189,16 @@ h3{font-size:16px;margin:0 0 8px}
 .kyA .big-ja .slot.ok{color:#fff3c9}
 .kyA.lv2 .big-ja{font-size:36px}
 @keyframes kyzoom{from{opacity:0;transform:scale(.86);letter-spacing:.2em}}
+/* ---------- 話のはじめの札：いつ・どこと、前回まで（v0.8）。キュンの寄りと同じ「真ん中の暗い帯」 ---------- */
+.opening{max-width:600px;width:100%;margin:0 auto;text-align:center;color:#fff;text-shadow:0 1px 8px rgba(40,10,40,.55);padding:20px 32px;background:linear-gradient(90deg,transparent,rgba(46,32,64,.66) 12%,rgba(46,32,64,.66) 88%,transparent);animation:opin .8s ease-out}
+.op-no{font-size:12px;letter-spacing:.35em;color:var(--gold);margin:0 0 4px}
+.op-title{font-size:26px;font-weight:700;letter-spacing:.08em;margin:0 0 6px}
+.op-at{font-size:14px;letter-spacing:.05em;margin:0}
+.op-prev{max-width:460px;margin:14px auto 0;padding-top:12px;border-top:1px solid rgba(255,214,170,.45)}
+.op-prev .op-lbl{font-size:11px;letter-spacing:.3em;color:var(--gold);margin:0 0 4px}
+.op-prev p{font-size:14px;line-height:1.7;margin:0}
+@keyframes opin{from{opacity:0;transform:translateY(8px)}}
+.log-at{font-size:13px;color:var(--win-sub);margin:-6px 0 14px}
 /* 物語の一覧・おわり・LOG のキュン */
 .kyn{font-size:12px;color:var(--voice);margin-left:6px;white-space:nowrap}
 .ky-row{color:var(--voice);margin:0 0 12px;font-size:14px}
@@ -311,6 +321,7 @@ details pre{white-space:pre-wrap;font:11px/1.5 ui-monospace,Menlo,monospace;max-
   .win.big .ja{font-size:18px}
   .win.big .en{font-size:25px}
   .kyA .big-ja{font-size:24px} .kyA.lv2 .big-ja{font-size:28px}
+  .opening{padding:16px 22px} .op-title{font-size:22px}
   .wbtn{grid-template-columns:7em 1fr auto}
   .brand small{display:none}
   #scene .sash{width:56vw;height:38vh;right:-10vw}
@@ -414,8 +425,8 @@ const CAST = {
   alt: { short: 'ローズ先生', name: 'ローズ先生（ALT）' },   // 大人の先生。恋愛には入れない（SPEC §7）
 };
 /* ---- 版と公開の設定（tools/build_public.mjs が公開版を作るときに BUILD と FEEDBACK_FORM を書き換える） ---- */
-const APP_VERSION = 'v0.7';
-const BUILD = '2026-10-27 12:11';
+const APP_VERSION = 'v0.8';
+const BUILD = '2026-10-27 12:19';
 /** 気づいたことを送る Google フォームの「事前入力した URL」。値が WHERE / DEVICE / AUDIO / VERSION の欄を、その場の情報に置きかえて開く */
 const FEEDBACK_FORM = "https://docs.google.com/forms/d/e/1FAIpQLSfI5iIsAUPtzHno8PDTKSUTl5X9gB5AbGxWDWe3zrfrN5w2UQ/viewform?usp=pp_url&entry.925617537=WHERE&entry.1949203390=DEVICE&entry.339169821=AUDIO&entry.1757535120=VERSION";
 /** 確認モード（URL の末尾に ?dev=1）：全部の話が開き、訳も全部読める。先生が中身を読んで確かめる用。記録には話を読んだことが残る */
@@ -610,6 +621,7 @@ const WMAP = Object.fromEntries(WORDS.map(w => [w.id, w]));
 /** 意味が近くて、選択肢に並べると答えが2つになる組（並べない） */
 const NEAR = [['hard', 'difficult'], ['learn', 'study'], ['learn', 'remember'], ['word', 'language'], ['letter', 'message'], ['phone', 'call'], ['read', 'study']];
 
+/* 話ごとに at（いつ・どこ）と sum（この話で起きたことを1行）。sum は、次の話のはじめに「前回まで」として出す（v0.8） */
 const N = t => ({ k: 'n', t }), V = t => ({ k: 'v', t }), Y = t => ({ k: 's', w: 'yota', t });
 const E = (en, ja, w = 'toru', lb) => ({ k: 'e', w, en, ja, lb });
 const GATE = { k: 'gate' };
@@ -621,7 +633,9 @@ const P = L => ({ ...L, big: true });
 const CHAPTERS = [
   { id: 'c1', no: 1, month: '4月', title: '図書室の帰国子女', grammar: 'be動詞・一般動詞・命令文・can', test: true,
     eps: [
-      { id: '1-1', title: '図書室の転校生', lines: [
+      { id: '1-1', title: '図書室の転校生', at: '四月・放課後の図書室',
+        sum: 'ロンドンから来た透と、英語が苦手な陽太。図書室の窓際の席で、一緒に本を読むことになった。',
+        lines: [
         N('四月。中学三年の春。'),
         N('あなたは図書委員になった。'),
         V('理由はひとつ。図書室は、尊いものが生まれる場所だから。異論は認めない。'),
@@ -654,7 +668,9 @@ const CHAPTERS = [
         V('窓。……グラウンドが見える、あの窓。サッカー部の。'),
         V('え、待って。待って？'),
       ] },
-      { id: '1-2', title: '緊張すると英語になる', lines: [
+      { id: '1-2', title: '緊張すると英語になる', at: '四月・次の日の放課後／図書室の奥のテーブル',
+        sum: '透は、緊張すると英語になる。覚えるのが早い陽太に「みんなが君を好きな理由、分かる気がする」。',
+        lines: [
         N('次の日の放課後。図書室の奥のテーブル。'),
         N('陽太が英語の問題集とにらめっこしている。その隣に、透。'),
         Y('なあトオル、この問題わかんねえ。'),
@@ -681,7 +697,9 @@ const CHAPTERS = [
         K(E("It's just a [language]. Some feelings are hard to say in any language.", 'ただの{language|言語}だよ。……どの言葉でも、言いにくい気持ちはある。')),
         V('言いにくい気持ち。言いにくい、気持ち！'),
       ] },
-      { id: '1-3', title: '閉館まで待つ人', lines: [
+      { id: '1-3', title: '閉館まで待つ人', at: '四月の終わり・閉館まぎわの図書室',
+        sum: '部活の陽太を、透は閉館まで待った。毎日ここで勉強する約束。初めて「陽太」と呼んだ。',
+        lines: [
         N('四月の終わり。'),
         Y('ごめんトオル！ 今日は部活あるから、勉強なしで！'),
         N('陽太は走っていった。グラウンドへ。'),
@@ -703,7 +721,9 @@ const CHAPTERS = [
         V('初めて名前を呼んだ。下の名前で。'),
         N('あなたは静かに、「閉館」の札を裏返した。'),
       ] },
-      { id: '1-4', title: '同じ高校へ', lines: [
+      { id: '1-4', title: '同じ高校へ', at: '五月の終わり・実力テストが返ってきた日の図書室',
+        sum: '英語十八点の陽太に、透は「君と同じ学校に行きたい」。ふたりの夢は、来年三月の星陵高校。',
+        lines: [
         N('五月の終わり。実力テストが返ってきた。'),
         P(Y('英語……十八点。')),
         N('陽太が机に突っぷした。担任には「星陵は厳しい」と言われたらしい。'),
@@ -727,7 +747,7 @@ const CHAPTERS = [
         V('第一章、完。……いや、まだだ。章末テストがある。受からないと、続きが読めない。'),
       ] },
     ],
-    bonus: { title: 'おまけ：透の英語日記', lines: [
+    bonus: { title: 'おまけ：透の英語日記', at: '図書室の忘れ物（紺色のノート）', lines: [
       N('図書室の忘れ物。紺色のノート。表紙に「DIARY」。'),
       V('読んではいけない。分かっている。でも、もう単語は覚えてしまった。'),
       E('April 8. I [met|meet] a loud boy in the [library].', '4月8日。{library|図書室}で、うるさい男子に{meet|出会った}。', 'note', '日記'),
@@ -741,7 +761,9 @@ const CHAPTERS = [
   },
   { id: 'c2', no: 2, month: '6月', title: '雨と傘と単語帳', grammar: '現在進行形・過去形', test: true,
     eps: [
-      { id: '2-1', title: '相合傘', lines: [
+      { id: '2-1', title: '相合傘', at: '六月・放課後、急な雨の昇降口',
+        sum: '雨の日、透の傘に陽太が入った。触れた手を、透は「あたたかい」と言った。',
+        lines: [
         N('六月。放課後、急な雨。'),
         N('昇降口で、陽太が空を見上げていた。'),
         Y('うわ、傘わすれた……。'),
@@ -764,7 +786,9 @@ const CHAPTERS = [
         K(E('I like the [rain]. Now I like it more.', '{rain|雨}は好きだ。今は、もっと好き。')),
         N('雨の音が、少しだけ大きくなった。'),
       ] },
-      { id: '2-2', title: '手作りの単語帳', lines: [
+      { id: '2-2', title: '手作りの単語帳', at: '六月・期末テストの前の放課後',
+        sum: '透が手作りの単語帳をくれた。「まだ開けないで」と言われた最後のページには、陽太への英語の一文。',
+        lines: [
         N('期末テストの前。透が一冊のノートを差し出した。'),
         K(E('I made this [notebook] for you. [Remember] all the words.', '君のために、この{notebook|ノート}を作った。単語を全部{remember|覚えて}。')),
         Y('手作りの単語帳!? すげえ！ ……で、なんて？'),
@@ -785,7 +809,9 @@ const CHAPTERS = [
         Y('……読めねえ。でも、なんか、すげえ大事なこと書いてある気がする。'),
         V('読めるよ。私は読める。今日、覚えたから。……尊い。'),
       ] },
-      { id: '2-3', title: '既読、つかない', lines: [
+      { id: '2-3', title: '既読、つかない', at: '六月・日曜日の夜（スマホのメッセージ）',
+        sum: '透の「さみしい」に、陽太は電話した。「お前の言葉、全部覚える」と言って。',
+        lines: [
         N('日曜日の夜。あなたのスマホが鳴った。陽太からだ。（図書委員の連絡網で、つながっている）'),
         Y('『図書委員、助けて。トオルに「最後のページ何て書いたの？」って送ったら、英語で返ってきた』'),
         N('転送されてきたメッセージ。'),
@@ -807,7 +833,9 @@ const CHAPTERS = [
         P(V('平和な一週間が始まる。……はずだった。')),
       ] },
       /* ---- ここから「入試の出る順」（北海道 R6〜R8 に3年とも出た語）で単語を選んでいる ---- */
-      { id: '2-4', title: 'うわさ', lines: [
+      { id: '2-4', title: 'うわさ', at: '六月・月曜日の教室と、昼休みの図書室',
+        sum: '相合傘がうわさになった。それでも陽太は「トオルの隣がいちばん集中できる」。',
+        lines: [
         N('月曜日。教室がざわついていた。'),
         N('黒板の前で、クラスの女子たちがひそひそ話している。'),
         P(V('……聞こえる。「日向くんと柊くん、一本の傘に入ってたらしいよ」。情報網、早すぎない？')),
@@ -830,7 +858,9 @@ const CHAPTERS = [
         K(E("...Don't [talk] like that in the library.", '……図書室で、そういうことを{talk|言わ}ないで。')),
         V('今日も平和に、尊い。うわさの出どころは、たぶん私じゃない。たぶん。'),
       ] },
-      { id: '2-5', title: '雨の日曜、二本の傘', lines: [
+      { id: '2-5', title: '雨の日曜、二本の傘', at: '六月・雨の日曜日／駅前の本屋とカフェ',
+        sum: '休みの日に、本屋とカフェへ。おそろいの本、半分このパンケーキ、撮り直した写真。',
+        lines: [
         N('次の日曜日。また雨。'),
         N('なぜか、あなたは駅前の本屋にいた。参考書を買いに来ただけだ。本当に。'),
         N('ガラスの向こうに、見覚えのある二つの傘。紺色と、オレンジ。'),
@@ -857,7 +887,9 @@ const CHAPTERS = [
         K(E('Wait. [Take] it again. I closed my eyes.', '待って。もう一回{take|撮って}。目をつぶった。'), 2),
         V('撮り直しを求める男子。写りを気にしているのではない。たぶん、ちゃんと隣に写りたい。'),
       ] },
-      { id: '2-6', title: '先に助けたのは', lines: [
+      { id: '2-6', title: '先に助けたのは', at: '六月の終わり・期末テストの前の日の図書室',
+        sum: '「先に助けてくれたのは君」と透。日本で興味がある「たくさんのこと」は、テストのあとで言う約束。',
+        lines: [
         N('六月の終わり。期末テストの前の日。図書室。'),
         Y('なあトオル。なんでいつも、俺のこと手伝ってくれんの？'),
         N('透は、ページをめくる手を止めた。'),
@@ -881,7 +913,9 @@ const CHAPTERS = [
         N('――そして、テストの日がやってくる。'),
         V('「たくさんのこと」の答えは、テストのあと。……私も、勉強しよう。'),
       ] },
-      { id: '2-7', title: '期末テストの朝', lines: [
+      { id: '2-7', title: '期末テストの朝', at: '期末テストの朝・昇降口と教室',
+        sum: 'テストの日、筆箱の中に透のしおり。陽太は「今までで一番できた」。',
+        lines: [
         N('期末テストの朝。昇降口。'),
         Y('やべえ……昨日の夜、単語帳を見てたら、気づいたら朝だった。'),
         V('徹夜で単語帳。最後のページを何回読んだのかは、聞かないでおく。'),
@@ -905,7 +939,9 @@ const CHAPTERS = [
         Y('……うん。たぶん、今までで一番できた。'),
         V('結果は来週。でも、もう答えは出ている気がする。'),
       ] },
-      { id: '2-8', title: '六十二点', lines: [
+      { id: '2-8', title: '六十二点', at: 'テストの一週間後・図書室',
+        sum: '英語は六十二点。お礼に透が頼んだのは「いつものように、トオルって呼んで」。',
+        lines: [
         N('一週間後。英語のテストが返ってきた。'),
         Y('……ろ、ろく、じゅう……'),
         P(Y('六十二点！！！ トオル！ 六十二点！！')),
@@ -926,7 +962,9 @@ const CHAPTERS = [
         E('I [hope] your next score will be higher. We still have a [lot] to study.', '次の点数が、もっと上がることを{hope|願ってる}。まだ{lot|たくさん}勉強することがある。'),
         V('ふたりの勉強は、まだ続く。それが一番の朗報。'),
       ] },
-      { id: '2-9', title: '外国から来た先生', lines: [
+      { id: '2-9', title: '外国から来た先生', at: '七月の初め・ALT の先生が来た日の学校',
+        sum: 'ALT のローズ先生と英語で話す透に、陽太はやきもち。透は「君と日本語で話すのが好き」。',
+        lines: [
         N('七月の初め。新しい ALT の先生が来た。'),
         N('ローズ先生。カナダから来たらしい。明るくて、声が大きい。'),
         E("Hi, everyone! I'm a new [English] [teacher]. I came from Canada.", 'みなさん、こんにちは！ 新しい{english|英語}の{teacher|先生}です。カナダから来ました。', 'alt'),
@@ -948,7 +986,9 @@ const CHAPTERS = [
         K(Y('……お前、ずるい。')),
         V('「ずるい」。陽太くんの語彙から出た、今日いちばんの名言。'),
       ] },
-      { id: '2-10', title: '伴奏者と指揮者', lines: [
+      { id: '2-10', title: '伴奏者と指揮者', at: '七月・合唱コンクールの練習のあとの音楽室',
+        sum: '伴奏は透、指揮は陽太。「みんなにやさしいわけじゃない。……君にだけ」。',
+        lines: [
         N('七月。合唱コンクールの練習が始まった。'),
         P(N('伴奏は、透。指揮は、なぜか陽太。')),
         V('伴奏者と指揮者。曲のあいだ、ずっと目を合わせ続ける役。……決めたのは誰？ 天才？'),
@@ -970,7 +1010,9 @@ const CHAPTERS = [
         K(E('And send me that [picture] later.', 'あと、その{picture|写真}、あとで送って。')),
         V('欲しいのか、その写真。……そういうことか。'),
       ] },
-      { id: '2-11', title: '三つの理由', lines: [
+      { id: '2-11', title: '三つの理由', at: '七月の第二週・放課後の図書室',
+        sum: '透が日本で興味がある三つのこと。雨、図書室……三つ目は「いつか言う」。',
+        lines: [
         N('七月の第二週。放課後の図書室。'),
         Y('テスト終わったぞ。約束だ。「ここで興味があるたくさんのこと」、言え！'),
         N('透は、本を閉じた。逃げられないと悟った顔。'),
@@ -993,7 +1035,9 @@ const CHAPTERS = [
         Y('……え、それ例？ 例なの？'),
         V('例です。三つ目の、いちばん大きなヒントです。……陽太くん、気づいて。'),
       ] },
-      { id: '2-12', title: '七月の約束', lines: [
+      { id: '2-12', title: '七月の約束', at: '終業式の二週間前・ホームルームの教室',
+        sum: '体育祭は赤と白で別のチーム。ずっと一緒に勉強する約束に、透は「友だちとして。……今のところは」。',
+        lines: [
         N('終業式まで、あと二週間。ホームルームで、体育祭の組分けが発表された。'),
         Y('……俺、赤組。トオルは？'),
         P(E('White. ...We are on different teams this [month].', '白。……{month|今月}は、別のチームだ。')),
@@ -1017,7 +1061,7 @@ const CHAPTERS = [
         N('――第2章 おわり。'),
       ] },
     ],
-    bonus: { title: 'おまけ：陽太のはじめての英語', lines: [
+    bonus: { title: 'おまけ：陽太のはじめての英語', at: '終業式の夜（スマホのメッセージ）', lines: [
       N('終業式の夜。あなたのスマホに、陽太からメッセージ。（また翻訳の依頼かと思った）'),
       Y('『図書委員、これ英語で合ってるか見て！ トオルに送る前に！』'),
       V('……陽太くんが、英語で書いた。あの十八点の陽太くんが。'),
@@ -1572,6 +1616,14 @@ VIEWS.reader = ({ ep, bonus, fresh }) => {
       ${due >= LOCK_DUE ? `<p class="note">……の前に。復習がたまっている（${due}語）。</p><button class="btn wide" data-act="review">復習する</button>` : `<button class="btn wide" data-act="learn">${list.length}語を覚える</button>`}
     </section>`;
   }
+  /** 話のはじめの札：第◯話・題・いつ・どこ・前回まで（ひとつ前の話の sum。第1話には無い） */
+  function openingHTML() {
+    const prev = ep ? EPS[EPS.indexOf(ep) - 1] : null;
+    const no = bonus ? `${chName(bonus.ch)}　おまけ` : `${chName(ep.ch)}　第${epNo(ep)}話`;
+    const name = bonus ? bonus.title.replace(/^おまけ：/, '') : ep.title;
+    const at = (bonus || ep).at;
+    return `<div class="opening"><p class="op-no">${no}</p><p class="op-title">${esc(name)}</p>${at ? `<p class="op-at">${esc(at)}</p>` : ''}${prev && prev.sum ? `<div class="op-prev"><p class="op-lbl">前回まで</p><p>${esc(prev.sum)}</p></div>` : ''}</div>`;
+  }
   /** おわりの画面：この話のキュン（受け取った数） */
   function kyRow() {
     const all = kyLines(lines);
@@ -1589,7 +1641,8 @@ VIEWS.reader = ({ ep, bonus, fresh }) => {
   }
   function logHTML() {
     const upto = done0 ? lines.length : pos;
-    return `<div class="log"><div class="log-in"><p class="log-t">LOG　${esc(title)}</p>${lines.slice(0, upto).map(logLineHTML).join('')}<button class="btn vn main wide" data-act="closelog">閉じる</button></div></div>`;
+    const at = (bonus || ep).at;
+    return `<div class="log"><div class="log-in"><p class="log-t">LOG　${esc(title)}</p>${at ? `<p class="log-at">${esc(at)}</p>` : ''}${lines.slice(0, upto).map(logLineHTML).join('')}<button class="btn vn main wide" data-act="closelog">閉じる</button></div></div>`;
   }
   return {
     focus: true, tab: 'story', scene: bonus ? 'day' : ep.bg,
@@ -1602,6 +1655,7 @@ VIEWS.reader = ({ ep, bonus, fresh }) => {
       if (recall !== null) center = '<p class="recall-k">― 回想 ―</p>' + kyCenter;
       else if (atGate()) center = gateHTML();
       else if (atEnd()) center = endHTML();
+      else if (pos === 1) center = openingHTML();
       else center = kyCenter;
       const rdCls = 'rd' + (ky ? ` kyon${L.ky === 2 ? ' kyon2' : ''}` : '');
       return `<div class="${rdCls}">
@@ -2294,6 +2348,12 @@ function lint() {
     epWords(ep).forEach(w => { if (!used.has(w.id)) errs.push(`${ep.id}: ${w.id} が物語に出てこない`); });
   });
   CHAPTERS.filter(c => c.bonus).forEach(c => check(c.bonus.lines, `${c.id}おまけ`, EPS.indexOf(c.eps[c.eps.length - 1])));
+  // 話のはじめの札：どの話にも at（いつ・どこ）と sum（前回まで）。長すぎると札が縦に伸びる
+  EPS.forEach(ep => {
+    if (!ep.at) errs.push(`${ep.id}: いつ・どこ（at）が無い`);
+    if (!ep.sum) errs.push(`${ep.id}: あらすじ（sum）が無い`);
+    else if (ep.sum.length > 60) errs.push(`${ep.id}: あらすじが長い（${ep.sum.length}字・60字まで）`);
+  });
   // キュン：どの話にも1つ以上・いちばんの場面（2）は1つだけ・関門には付けない
   [...EPS.map(ep => [ep.id, ep.lines]), ...CHAPTERS.filter(c => c.bonus).map(c => [`${c.id}おまけ`, c.bonus.lines])].forEach(([where, lines]) => {
     if (!kyLines(lines).length) errs.push(`${where}: キュンが0`);
