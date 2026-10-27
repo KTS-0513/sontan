@@ -27,7 +27,7 @@
   --shade:0 1px 6px rgba(70,35,60,.55);
 }
 *{box-sizing:border-box}
-html,body{margin:0;min-height:100%}
+html,body{margin:0;min-height:100%;min-height:100vh;min-height:100dvh}   /* GAS の iframe で高さが0になって真っ白、を防ぐ */
 body{color:var(--ink);background:#e9a58f;font-family:'Zen Maru Gothic',system-ui,-apple-system,sans-serif;font-size:16px;line-height:1.75;-webkit-text-size-adjust:100%}
 button{font:inherit;color:inherit}
 .en{font-family:'Cormorant Garamond',Georgia,'Times New Roman',serif}
@@ -382,7 +382,7 @@ const CAST = {
 };
 /* ---- 版と公開の設定（tools/build_public.mjs が公開版を作るときに BUILD と FEEDBACK_FORM を書き換える） ---- */
 const APP_VERSION = 'v0.6';
-const BUILD = '2026-10-27 10:29';
+const BUILD = '2026-10-27 11:24';
 /** 気づいたことを送る Google フォームの「事前入力した URL」。値が WHERE / DEVICE / AUDIO / VERSION の欄を、その場の情報に置きかえて開く */
 const FEEDBACK_FORM = "https://docs.google.com/forms/d/e/1FAIpQLSfI5iIsAUPtzHno8PDTKSUTl5X9gB5AbGxWDWe3zrfrN5w2UQ/viewform?usp=pp_url&entry.925617537=WHERE&entry.1949203390=DEVICE&entry.339169821=AUDIO&entry.1757535120=VERSION";
 /** 確認モード（URL の末尾に ?dev=1）：全部の話が開き、訳も全部読める。先生が中身を読んで確かめる用。記録には話を読んだことが残る */
