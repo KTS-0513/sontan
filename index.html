@@ -171,6 +171,7 @@ h3{font-size:16px;margin:0 0 8px}
 .win.big p{font-size:26px;font-weight:700;line-height:1.55;letter-spacing:.03em}
 .win.big .en{font-size:32px}
 .win.big .ja{font-size:21px}
+.win.big .cant{font-size:12px;font-weight:400;letter-spacing:0}   /* 「訳せない……」の注意書きまで大きくしない */
 .win.big{animation:bigin .7s ease-out}
 @keyframes bigin{from{opacity:.2;transform:translateY(6px)}}
 .win .ky-cant{color:var(--voice-ink)}
@@ -426,9 +427,12 @@ const CAST = {
 };
 /* ---- 版と公開の設定（tools/build_public.mjs が公開版を作るときに BUILD と FEEDBACK_FORM を書き換える） ---- */
 const APP_VERSION = 'v0.8';
-const BUILD = '2026-10-27 12:19';
+const BUILD = '2026-11-03 21:53';
 /** 気づいたことを送る Google フォームの「事前入力した URL」。値が WHERE / DEVICE / AUDIO / VERSION の欄を、その場の情報に置きかえて開く */
 const FEEDBACK_FORM = "https://docs.google.com/forms/d/e/1FAIpQLSfI5iIsAUPtzHno8PDTKSUTl5X9gB5AbGxWDWe3zrfrN5w2UQ/viewform?usp=pp_url&entry.925617537=WHERE&entry.1949203390=DEVICE&entry.339169821=AUDIO&entry.1757535120=VERSION";
+/** 体験版（note を読んだ方向け・GitHub Pages の sontan-demo）。tools/build_public.mjs demo が true にする。
+ *  生徒のテストプレイではないので「気づいた」ボタンを出さない（生徒のフォームに、外の人の声が混ざらないように） */
+const DEMO = false;
 /** 確認モード（URL の末尾に ?dev=1）：全部の話が開き、訳も全部読める。先生が中身を読んで確かめる用。記録には話を読んだことが残る */
 const DEV = /[?&]dev=1(&|$)/.test(location.search);
 const PLANNED_TOTAL = 1352;      // 全体設計の語数＝入試に出た 1,346語＋物語のために入れた6語（data/出る順.tsv・本人の決定 2026-10-27）
@@ -1312,9 +1316,10 @@ const enHTML = en => esc(en).replace(/\[([^\]|]+)(?:\|[^\]]+)?\]/g, '<b class="h
 const exHTML = w => esc(w.ex).replace(/\[([^\]]+)\]/, '<b>$1</b>');
 const exJaHTML = w => esc(w.exJa).replace(/\{([^}]+)\}/, '<b>$1</b>');
 const exForm = w => w.ex.match(/\[([^\]]+)\]/)[1];
+const fbBtn = () => (DEMO ? '' : '<button class="link" data-act="fb">気づいた</button>');
 function qHead(title, cur, total) {
   const pct = total ? Math.round(cur / total * 100) : 0;
-  return `<div class="q-head"><button class="link" data-act="home">やめる</button><span class="ttl">${esc(title)}</span><button class="link" data-act="fb">気づいた</button><span class="cnt">${total ? `${cur} / ${total}` : ''}</span></div><div class="prog"><i style="width:${pct}%"></i></div>`;
+  return `<div class="q-head"><button class="link" data-act="home">やめる</button><span class="ttl">${esc(title)}</span>${fbBtn()}<span class="cnt">${total ? `${cur} / ${total}` : ''}</span></div><div class="prog"><i style="width:${pct}%"></i></div>`;
 }
 /** 端末のようす（気づいたことに付ける。名前や ID は入れない） */
 function deviceInfo() {
@@ -1325,6 +1330,7 @@ function deviceInfo() {
 }
 /** 気づいたことを送る：Google フォームを、どこで・端末・音声のようす・版を書きこんだ状態で開く */
 function openFeedback() {
+  if (DEMO) return;
   const names = { home: 'ホーム', story: '物語の一覧', words: '単語帳', record: '記録', settings: '設定', result: '結果の画面', lock: '続きが読めない画面' };
   const where = VIEW && VIEW.where ? VIEW.where() : (names[VIEW && VIEW.name] || '');
   const info = { WHERE: where, DEVICE: deviceInfo(), AUDIO: S.audioTest || 'まだ試していない', VERSION: `${APP_VERSION}（${BUILD}）` };
@@ -1359,7 +1365,7 @@ function render() {
 function updateHeader() {
   const n = daysLeft();
   $('#examLeft').innerHTML = n >= 0 ? `入試まで あと <b>${n}</b> 日` : '';
-  $('#buildTag').textContent = `テスト版 ${APP_VERSION}${DEV ? '・確認モード' : ''}`;
+  $('#buildTag').textContent = `${DEMO ? '体験版' : 'テスト版'} ${APP_VERSION}${DEV ? '・確認モード' : ''}`;
 }
 const ACT = {
   home: () => go('home'),
@@ -1436,7 +1442,7 @@ VIEWS.home = () => ({
     const pace = left > 0 ? Math.ceil(Math.max(0, PLANNED_TOTAL - learnedCount()) / left) : 0;
     return `<div class="title"><h1>尊単</h1><p>君の英語が、読めるまで</p></div>
       ${gaugeHTML()}${main}
-      <div class="menu"><button class="btn vn" data-act="fb">テスト版：気づいたことを送る</button></div>
+      ${DEMO ? '' : '<div class="menu"><button class="btn vn" data-act="fb">テスト版：気づいたことを送る</button></div>'}
       <section class="panel"><div class="stats"><div><span class="k">今日 覚えた</span><b>${t.n}</b>語</div><div><span class="k">今日 復習</span><b>${t.r}</b>語</div><div><span class="k">連続</span><b>${streak()}</b>日</div></div>
       <p class="plan">${left > 0 ? `入試まで${left}日。全${PLANNED_TOTAL.toLocaleString()}語を覚えるなら、1日${pace}語（${(pace / 10).toFixed(1)}話）のペース。` : '入試の日を「設定」で入れると、1日のペースが出る。'}</p></section>`;
   },
@@ -1659,7 +1665,7 @@ VIEWS.reader = ({ ep, bonus, fresh }) => {
       else center = kyCenter;
       const rdCls = 'rd' + (ky ? ` kyon${L.ky === 2 ? ' kyon2' : ''}` : '');
       return `<div class="${rdCls}">
-        <div class="q-head"><button class="link" data-act="home">やめる</button><span class="ttl">${esc(title)}</span><button class="link" data-act="fb">気づいた</button><button class="link" data-act="log">LOG</button></div>
+        <div class="q-head"><button class="link" data-act="home">やめる</button><span class="ttl">${esc(title)}</span>${fbBtn()}<button class="link" data-act="log">LOG</button></div>
         <div class="rd-stage">${center}</div>
         <div class="rd-msg">${recall !== null ? '<div class="spark" id="spark"></div>' : ''}${ky ? '<div class="hearts" id="hearts"></div>' : ''}${winHTML(L, recall !== null ? newIds : null, stop ? '' : '<span class="next" aria-hidden="true">▼</span>', ky)}</div>
         ${showLog ? logHTML() : ''}
@@ -2274,10 +2280,11 @@ VIEWS.settings = () => {
           <button class="btn ghost" data-act="exp">書き出す</button>
           <button class="btn ghost" data-act="imp">${armedImp ? '上書きして読みこむ（もう一度押す）' : '読みこむ'}</button>
           <textarea id="io" rows="4" placeholder="ここに書き出される／ここに貼って読みこむ" aria-label="記録の文字"></textarea></section>
-        <section class="box"><h3>テストプレイ</h3>
+        ${DEMO ? `<section class="box"><h3>体験版</h3>
+          <p class="note">note を読んでくださった方向けの体験版（${APP_VERSION}）。いまは第2章（160語）まで。記録はこの端末のこのブラウザだけに残り、どこにも送らない。英語の読み上げは、端末の声を使う。</p></section>` : `<section class="box"><h3>テストプレイ</h3>
           <p class="note">いまはテスト版（${APP_VERSION}）。読みにくい・分かりにくい・動かない・もっとこうしてほしい・尊かった……なんでも送ってね。<b>名前は書かないでね。</b></p>
           <button class="btn ghost" data-act="fb">気づいたことを送る</button>
-          <p class="note">記録はこの端末のこのブラウザだけに残る。新しい版になっても、記録はそのまま続く。</p></section>
+          <p class="note">記録はこの端末のこのブラウザだけに残る。新しい版になっても、記録はそのまま続く。</p></section>`}
         <section class="box"><h3>最初から</h3>
           <button class="btn ghost" data-act="reset">${armed ? '本当に全部消す（もう一度押す）' : '記録を全部消す'}</button></section>
         <details class="box"><summary>デバッグログ（うまく動かないとき、これを先生に送る）</summary>
