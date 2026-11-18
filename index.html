@@ -8,7 +8,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Zen+Maru+Gothic:wght@500;700&family=Cormorant+Garamond:ital,wght@0,500;0,600;0,700;1,500&family=Klee+One:wght@600&display=swap" rel="stylesheet">
-<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,400,0..1,0&icon_names=auto_awesome,bento,book,bookmark,campaign,chat_bubble,checklist,directions_run,edit_note,emoji_events,event_seat,favorite,flag,format_list_numbered,hourglass_top,icecream,ink_pen,inventory_2,lightbulb,local_library,lock,menu_book,nights_stay,photo_camera,piano,public,rainy,redeem,school,send,smartphone,sprint,steps,sticky_note_2,translate,umbrella,volume_up,water_drop,wb_sunny,wb_twilight,window" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,400,0..1,0&icon_names=auto_awesome,bento,book,bookmark,campaign,celebration,chat_bubble,checklist,directions_run,draft,edit_note,emoji_events,event,event_seat,favorite,festival,flag,flare,format_list_numbered,home,hourglass_top,icecream,ink_pen,inventory_2,lightbulb,local_library,lock,lunch_dining,menu_book,mic,nights_stay,pets,photo_camera,piano,public,radio,rainy,redeem,schedule,school,send,smartphone,sports_tennis,sprint,stars,steps,sticky_note_2,train,translate,trending_up,umbrella,volume_up,water_drop,wb_sunny,wb_twilight,window" rel="stylesheet">
 <style>
 /* =========================================================
    見た目：ノベルゲーム（v0.3・本人が案Bを選んだ）
@@ -362,6 +362,9 @@ details pre{white-space:pre-wrap;font:11px/1.5 ui-monospace,Menlo,monospace;max-
 .has-scene .tc-bk{opacity:.18!important}
 .tc-art.has-img{background:#fffdf8}
 .tc-art .tc-img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:block}
+.tc-art .tc-img-in{animation:tcImgIn .35s ease-out}   /* GAS 版：あとから届いた絵は、ふわっと出す */
+@keyframes tcImgIn{from{opacity:0}to{opacity:1}}
+@media (prefers-reduced-motion:reduce){.tc-art .tc-img-in{animation:none}}
 .has-img .tc-sp{font-size:.7em!important;opacity:.7}
 /* うら */
 .tc-back{transform:rotateY(180deg);background:#fbf6ee;border:1px solid #e3d6c3;padding:1.2em 1.1em;display:flex;flex-direction:column;gap:.45em;font-size:1em}
@@ -440,7 +443,6 @@ details pre{white-space:pre-wrap;font:11px/1.5 ui-monospace,Menlo,monospace;max-
 <div id="toast" class="toast" hidden></div>
 <noscript>このアプリは JavaScript を使います。</noscript>
 <!-- 公開版：Mac の声の音声ファイルは入れない（Apple の利用条件）。生徒の端末の読み上げで鳴る -->
-<!-- 場面カードの絵（img/cards/<id>.jpg）。GAS はファイルを配れないので、GAS 版だけ build_public がここに絵の中身を差しこむ -->
 
 <script>
 'use strict';
@@ -521,8 +523,8 @@ const CAST = {
   alt: { short: 'ローズ先生', name: 'ローズ先生（ALT）' },   // 大人の先生。恋愛には入れない（SPEC §7）
 };
 /* ---- 版と公開の設定（tools/build_public.mjs が公開版を作るときに BUILD と FEEDBACK_FORM を書き換える） ---- */
-const APP_VERSION = 'v0.9';
-const BUILD = '2026-11-17 10:42';
+const APP_VERSION = 'v0.10';
+const BUILD = '2026-11-18 14:08';
 /** 気づいたことを送る Google フォームの「事前入力した URL」。値が WHERE / DEVICE / AUDIO / VERSION の欄を、その場の情報に置きかえて開く */
 const FEEDBACK_FORM = "https://docs.google.com/forms/d/e/1FAIpQLSfI5iIsAUPtzHno8PDTKSUTl5X9gB5AbGxWDWe3zrfrN5w2UQ/viewform?usp=pp_url&entry.925617537=WHERE&entry.1949203390=DEVICE&entry.339169821=AUDIO&entry.1757535120=VERSION";
 /** 体験版（note を読んだ方向け・GitHub Pages の sontan-demo）。tools/build_public.mjs demo が true にする。
@@ -530,7 +532,7 @@ const FEEDBACK_FORM = "https://docs.google.com/forms/d/e/1FAIpQLSfI5iIsAUPtzHno8
 const DEMO = false;
 /** 確認モード（URL の末尾に ?dev=1）：全部の話が開き、訳も全部読める。先生が中身を読んで確かめる用。記録には話を読んだことが残る */
 const DEV = /[?&]dev=1(&|$)/.test(location.search);
-const PLANNED_TOTAL = 1352;      // 全体設計の語数＝入試に出た 1,346語＋物語のために入れた6語（data/出る順.tsv・本人の決定 2026-10-27）
+const PLANNED_TOTAL = 1351;      // 全体設計の語数＝入試に出た 1,345語＋物語のために入れた6語（data/出る順.tsv・本人の決定 2026-10-27。2026-11-17 に表の切れ端 haven を外した）
 const LOCK_DUE = 10;             // 復習がこの数たまると、新しい話が読めない
 const REVIEW_MAX = 20;           // 1回の復習の最大語数
 const TEST_N = 20;               // 章末テストの問題数
@@ -847,10 +849,144 @@ const WORDS = [
   W('3-12', 'social', '形', '社会の、社交的な', 'You are good at [social] studies, but not English.', '君は{社会}は得意だけど、英語はね。', '得意科目を把握している。成績まで観測済み。'),
   W('3-12', 'tennis', '名', 'テニス', "I can't play [tennis]. Will you teach me?", '{テニス}はできない。教えてくれる？', '教わる側に回るのも、悪くない。'),
   W('3-12', 'thanks', '名', '感謝（Thanks.＝ありがとう）', '[Thanks] for being here.', 'ここにいてくれて{ありがとう}。', 'いてくれるだけで、礼を言われる。'),
+  /* ---- 第4章 第1話 となりの席、空いてる？ ---- */
+  W('4-1', 'early', '副', '早く（形容詞は、早い）', 'I came [early] to save this seat for you.', '君の席を取っておくために、{早く}来た。', '早起きの理由が、毎回同じ人。'),
+  W('4-1', 'free', '形', '空いている、ひまな、無料の、自由な', 'Are you [free] after class? I want to study with you.', '講習のあと、{ひま}？ 一緒に勉強したい。', '聞く前から、答えは知っている。'),
+  W('4-1', 'save', '動', '（席などを）取っておく、ためる、救う', 'I want to [save] this seat for you every day.', '毎日、君のためにこの席を{取っておき}たい。', '席取りのために、目覚ましが四つに増えた。'),
+  W('4-1', 'need', '動', '必要とする（need to〜＝〜する必要がある）', 'You [need] to sleep more. Your eyes are red.', '君はもっと寝る{必要がある}。目が赤い。', '寝不足の理由は、小テストづくり。'),
+  W('4-1', 'homework', '名', '宿題', 'We have a lot of [homework] to do this summer.', 'この夏は、やる{宿題}がたくさんある。', '宿題が多いほど、一緒にいる時間も多い。計算どおり。'),
+  W('4-1', 'solve', '動', '解く、解決する', 'I want to [solve] this problem with you.', 'この問題を、君と一緒に{解き}たい。', '解き方は、もう分かっている。一緒に、が大事。'),
+  W('4-1', 'quiz', '名', '小テスト、クイズ', 'I made a [quiz] for you to try.', '君にやってもらう{小テスト}を作った。', '問題の作り手が、いちばん楽しそう。'),
+  W('4-1', 'science', '名', '理科、科学', 'Studying [science] with you is fun.', '君と{理科}を勉強するのは楽しい。', '楽しいのは理科か、君か。'),
+  W('4-1', 'thirty', '名', '30、三十', 'I waited [thirty] minutes to see you.', '君に会うために、{三十}分待った。', '三時間（第2章）、四時間（第3章）から、だいぶ控えめ。'),
+  W('4-1', 'clock', '名', '時計（置き時計・かけ時計）', "Look at the [clock]. It's time to go home.", '{時計}を見て。帰る時間だよ。', '帰りたくない日に限って、時計は正確。'),
+  /* ---- 第4章 第2話 オレンジの帽子 ---- */
+  W('4-2', 'run', '動', '走る', 'I like [running] with you every morning.', '毎朝、君と{走る}のが好き。', '好きなのは走ることか、隣か。'),
+  W('4-2', 'radio', '名', 'ラジオ', 'I like listening to the [radio] in the morning.', '朝、{ラジオ}を聞くのが好き。', 'ラジオ体操の前に、予習のラジオ。まじめ。'),
+  W('4-2', 'music', '名', '音楽', "Let's move to the [music]. Everyone knows it.", '{音楽}に合わせて動こう。みんな知ってるから。', '知らないのは、帰国子女ひとり。（ゆうべまでは）'),
+  W('4-2', 'health', '名', '健康', 'Sleeping well is good for your [health].', 'よく寝るのは、{健康}にいい。', '言っている本人が、いちばん寝ていない。'),
+  W('4-2', 'body', '名', '体', 'My [body] remembers how to do it.', 'やり方は、{体}が覚えてる。', '頭より先に、体が覚えるタイプ。'),
+  W('4-2', 'weather', '名', '天気', "The [weather] is nice. Let's go out to run.", '{天気}がいい。走りに出よう。', 'いい天気の日は、誘う理由が増える。'),
+  W('4-2', 'cap', '名', '（ふちのない）帽子、キャップ', 'I forgot to bring my [cap]. Can I borrow yours?', '{帽子}を持ってくるのを忘れた。君のを借りてもいい？', '借りたら、返す気がない顔。'),
+  W('4-2', 'water', '名', '水', 'You need to drink more [water].', 'もっと{水}を飲まなきゃだめだ。', '水筒は二本。一本は君の分。'),
+  W('4-2', 'drink', '動', '飲む（名詞は、飲み物）', 'Do you want something to [drink]?', '何か{飲む}もの、いる？', '聞きながら、もう冷えたお茶を差し出している。'),
+  W('4-2', 'sleep', '動', '眠る（名詞は、眠り）', 'I tried to [sleep], but I thought about you.', '{寝よう}としたけど、君のことを考えてた。', '寝不足の原因、特定。'),
+  /* ---- 第4章 第3話 「作りすぎた」の番 ---- */
+  W('4-3', 'open', '形', '開いている（動詞は、開ける・開く）', 'The library is [open] in summer, so I can see you.', '図書室は夏も{開いている}から、君に会える。', '開館日は、会える日。'),
+  W('4-3', 'sandwich', '名', 'サンドイッチ', 'I made [sandwiches] to eat with you.', '君と食べるために、{サンドイッチ}を作った。', 'パンの耳は、自分の分。'),
+  W('4-3', 'bread', '名', 'パン', 'I bought some [bread] to make lunch.', 'お昼を作るために、{パン}を買った。', '材料から、もう本気。'),
+  W('4-3', 'salad', '名', 'サラダ', 'Eating [salad] is good for you.', '{サラダ}を食べるのは、体にいい。', '野菜をよける人に、正論。'),
+  W('4-3', 'vegetable', '名', '野菜', 'Try to eat your [vegetables], too.', '{野菜}も、食べるようにして。', 'ピーマンだけ、静かに箱の端へ。'),
+  W('4-3', 'box', '名', '箱（lunch box＝弁当箱）', 'I made two lunch [boxes]. ...I made too much.', 'お弁当{箱}を二つ用意した。……作りすぎた。', '二つ作った時点で、作りすぎではない。'),
+  W('4-3', 'fry', '動', '油で揚げる、いためる', 'I learned to [fry] chicken for you.', '君のために、からあげを{揚げ}られるようになった。', '最初の三個は、黒い。'),
+  W('4-3', 'snack', '名', 'おやつ、軽食', 'I brought a [snack] to eat after studying.', '勉強のあとに食べる{おやつ}を持ってきた。', 'おやつは、ちゃんと二人分。'),
+  W('4-3', 'alone', '副', 'ひとりで', "I don't like eating [alone] anymore.", 'もう、{ひとりで}食べるのは好きじゃない。', '「もう」に、四月からの歴史がある。'),
+  W('4-3', 'enough', '形', '十分な（副詞は、十分に）', 'I have [enough] time to help you.', '君を手伝う時間なら、{十分}ある。', '時間は、作るもの。'),
+  /* ---- 第4章 第4話 花火の日に生まれた ---- */
+  W('4-4', 'welcome', '動', '歓迎する（Welcome to〜＝〜へようこそ）', '[Welcome] to my house! Come in!', '俺んちへ{ようこそ}！ 入って！', 'ようこその声が、玄関の外まで。'),
+  W('4-4', 'living', '名', '生活（living room＝居間、リビング）', 'Our [living] room is a good place to study.', 'うちの{リビング}は、勉強するのにいい場所。', '勉強の進み具合は、妹さんしだい。'),
+  W('4-4', 'sister', '名', '姉、妹', 'My little [sister] wants to meet you.', '{妹}が、君に会いたがってる。', '妹さん経由の招待状。断れない。'),
+  W('4-4', 'mom', '名', 'お母さん、ママ', 'My [mom] was happy to see you.', '{母ちゃん}、君に会えて喜んでた。', 'お母さんの中の好感度、すでに満点。'),
+  W('4-4', 'piano', '名', 'ピアノ', "I'm happy to play the [piano] for you.", '君のために{ピアノ}を弾けて、うれしい。', '伴奏者、出張サービス中。'),
+  W('4-4', 'fruit', '名', '果物、フルーツ', 'I brought some [fruit] to say thank you.', 'お礼を言うために、{果物}を持ってきた。', '手みやげの作法、完璧。'),
+  W('4-4', 'grandfather', '名', '祖父、おじいさん', 'My [grandfather] taught me to play soccer.', '{じいちゃん}が、サッカーを教えてくれた。', '笑った顔が、そっくりらしい。'),
+  W('4-4', 'born', '動', '生まれた（be born＝生まれる）', 'I was [born] in August.', '僕は八月に{生まれた}。', '八月生まれ。夏の子。'),
+  W('4-4', 'birthday', '名', '誕生日', 'I want to make your [birthday] special.', '君の{誕生日}を、特別な日にしたい。', '予定表の十六日に、丸が三重。'),
+  W('4-4', 'cute', '形', 'かわいい', 'You were so [cute] when you were little.', '小さいころの君、すごく{かわいかった}。', '過去形にしておくのが、照れかくし。'),
+  /* ---- 第4章 第5話 トラを見て、僕じゃなくて ---- */
+  W('4-5', 'zoo', '名', '動物園', "Let's go to the [zoo] to see the tigers.", 'トラを見に、{動物園}へ行こう。', 'トラを見に行く、は建前。'),
+  W('4-5', 'lion', '名', 'ライオン', 'The [lion] likes sleeping in the sun.', 'その{ライオン}は、日なたで寝るのが好き。', '日なたで寝るのが好きな人、もう一人知っている。'),
+  W('4-5', 'tiger', '名', 'トラ', 'I came here to see the [tiger].', '{トラ}を見に、ここへ来た。', 'トラは、ほぼ見ていない。'),
+  W('4-5', 'tall', '形', '背が高い、高い', 'You are so [tall]. Can you get that book for me?', '君はすごく{背が高い}。あの本、取ってくれる？', '図書室のいちばん上の段は、陽太くんの担当。'),
+  W('4-5', 'big', '形', '大きい', 'I want to see the [big] animals first!', '{大きい}動物から先に見たい！', '小三の妹さんと、同じテンション。'),
+  W('4-5', 'bigger', '形', 'より大きい（big の比較級）', 'The tiger is [bigger] than the lion.', 'トラはライオンより{大きい}。', 'ライオン派の陽太くん、異議あり。'),
+  W('4-5', 'large', '形', '大きい、広い', 'This zoo is very [large]. I want to see everything with you.', 'すごく{広い}動物園。全部、君と見たい。', '全部見たら、閉園まで一緒。計算どおり。'),
+  W('4-5', 'adult', '名', '大人', "When we become [adults], let's come here again.", '{大人}になったら、またここに来よう。', '大人になっても、の約束が増えていく。'),
+  W('4-5', 'smartphone', '名', 'スマートフォン、スマホ', 'Put your [smartphone] away and look at the animals.', '{スマホ}をしまって、動物を見て。', '見ているのは、動物ではない。'),
+  W('4-5', 'pet', '名', 'ペット', 'I want to have a dog as a [pet] someday.', 'いつか、{ペット}に犬を飼いたい。', '柴犬の名前は、もう決めてあるらしい。'),
+  /* ---- 第4章 第6話 「表す」って、なに ---- */
+  W('4-6', 'speech', '名', 'スピーチ、演説', 'I need to write a [speech] in English.', '英語の{スピーチ}を書かなきゃ。', '書き出しで、三日止まる。'),
+  W('4-6', 'presentation', '名', '発表、プレゼンテーション', 'I want to give a good [presentation].', 'いい{発表}をしたい。', '聞いてほしい人は、一人。'),
+  W('4-6', 'topic', '名', '話題、トピック', 'I have a good [topic] to talk about.', '話すのにいい{話題}がある。', '話題は、だいたい同じ人。'),
+  W('4-6', 'title', '名', '題名、タイトル', "The [title] of my speech is 'My Dream.'", 'スピーチの{題}は「わたしの夢」。', '題は決まった。中身は、ひみつ。'),
+  W('4-6', 'story', '名', '物語、話', 'I like reading [stories] with you.', '君と{物語}を読むのが好き。', 'いちばん続きが気になる物語は、いま隣にある。'),
+  W('4-6', 'part', '名', '部分、役', 'Talking with you is the best [part] of my day.', '君と話すのが、一日でいちばんいい{ところ}。', '残りの部分も、だいたい君。'),
+  W('4-6', 'continue', '動', '続ける、続く', "Let's [continue] studying after lunch.", 'お昼のあとも、勉強を{続けよう}。', '休み時間が終わるのが、少しさみしい。'),
+  W('4-6', 'express', '動', '表す、表現する', 'I want to [express] my feelings in Japanese, too.', '日本語でも、気持ちを{表し}たい。', '英語に逃げない日が、いつか来る。'),
+  W('4-6', 'means', '動', '意味する（mean の三単現）', "This word [means] 'to show your feelings.'", 'この単語は「気持ちを見せること」という{意味だ}。', '辞書より先に、透くんに聞く人がいる。'),
+  W('4-6', 'feeling', '名', '気持ち、感情（ふつう feelings）', 'I write in my diary to understand my [feelings].', '自分の{気持ち}を知るために、日記を書く。', '紺のノートの中身は、読んではいけない（第1章）。'),
+  /* ---- 第4章 第7話 貸出票の裏の英語 ---- */
+  W('4-7', 'plan', '名', '計画、予定（動詞は、計画する）', 'Do you have any [plans] for the weekend?', '週末、何か{予定}ある？', '「ない」と答えるために、予定を空けておく人がいる。'),
+  W('4-7', 'maybe', '副', 'たぶん、もしかしたら', '[Maybe] you want to come with me?', '{もしかして}、一緒に来たい？', '聞き方が、遠回しで直球。'),
+  W('4-7', 'someone', '代', '誰か', '[Someone] left a note in my book.', '{誰か}が、僕の本にメモをはさんでいった。', '犯人の字は、オレンジのペン。'),
+  W('4-7', 'busy', '形', '忙しい', "I'm [busy], but I have time to see you.", '{忙しい}けど、君に会う時間はある。', '忙しいの意味が、人によってちがう。'),
+  W('4-7', 'ever', '副', '（疑問文で）これまでに、いつか、たまにでも', 'Do you [ever] think about me?', '僕のこと、{たまにでも}考える？', '答えを聞く前に、耳が赤い。'),
+  W('4-7', 'never', '副', '一度も〜ない、決して〜ない', 'I [never] want to forget this summer.', 'この夏を、{決して}忘れたくない。', '忘れないように、写真は三か所に保存。'),
+  W('4-7', 'anything', '代', '（疑問文で）何か、（否定文で）何も', 'Do you need [anything] to eat?', '{何か}食べるもの、いる？', '聞きながら、もうおにぎりを出している。'),
+  W('4-7', 'soon', '副', 'すぐに、まもなく', 'I want to see you again [soon].', '{すぐに}また会いたい。', '別れて三分で、もう言っている。'),
+  W('4-7', 'sure', '形', '確信して、きっと（Sure.＝もちろん）', "I'm [sure] you can do it.", '{きっと}、君ならできる。', '根拠は、四月からの観測データ。'),
+  W('4-7', 'five', '名', '5、五つ', "Let's meet at [five] to go to the festival.", 'お祭りに行くために、{五}時に会おう。', '四時半には、もう着いている。'),
+  /* ---- 第4章 第8話 ネットのない三日間 ---- */
+  W('4-8', 'station', '名', '駅', 'I ran to the [station] to say goodbye.', '見送るために、{駅}まで走った。', '朝のランニングの成果が、ここで出る。'),
+  W('4-8', 'twenty', '名', '20、二十', 'The train leaves in [twenty] minutes.', '電車は{二十}分後に出る。', '二十分。長いようで、短い。'),
+  W('4-8', 'carry', '動', '運ぶ、持っていく', 'Thank you for [carrying] my bag.', 'かばんを{持って}くれて、ありがとう。', 'かばんを持つ係は、もう決まっている。'),
+  W('4-8', 'email', '名', 'Eメール、メール', 'I want to send you an [email] every day.', '毎日、君に{メール}を送りたい。', '送ったら、返信まで画面を見つめる。'),
+  W('4-8', 'card', '名', 'カード、はがき', 'I bought a [card] to write to you.', '君に書くために、{はがき}を買った。', '五枚買った。書き損じ用に四枚。'),
+  W('4-8', 'abroad', '副', '外国に、外国で', 'I lived [abroad] when I was little.', '小さいころ、{外国に}住んでいた。', '外国の話は、まだ少ししか聞いていない。'),
+  W('4-8', 'travel', '動', '旅行する（名詞は、旅行）', 'I want to [travel] around Hokkaido with you.', '君と、北海道を{旅し}たい。', '行き先の一覧、作成中。'),
+  W('4-8', 'snow', '名', '雪（動詞は、雪が降る）', 'I want to see the [snow] with you this winter.', 'この冬は、君と{雪}が見たい。', 'ロンドンより、たぶん多い。'),
+  W('4-8', 'spring', '名', '春', 'I hope to see the flowers with you in [spring].', '{春}には、君と花を見たい。', '春の約束は、合格の約束。'),
+  W('4-8', 'map', '名', '地図', 'I drew a [map] to show you the way.', '道を教えるために、{地図}を描いた。', '目的地に、丸が二重。'),
+  /* ---- 第4章 第9話 人ごみの中で ---- */
+  W('4-9', 'uniform', '名', '制服、ユニフォーム', 'I like seeing you in your soccer [uniform].', 'サッカーの{ユニフォーム}の君を見るのが好き。', '泥だらけでも、好き（第1章参照）。'),
+  W('4-9', 'exciting', '形', 'わくわくさせる、おもしろい', 'Watching fireworks is [exciting].', '花火を見るのは、{わくわくする}。', 'わくわくの理由、花火は二番目。'),
+  W('4-9', 'corn', '名', 'とうもろこし（北海道では、とうきび）', 'Eating [corn] at a festival is the best.', 'お祭りで{とうもろこし}を食べるのが、いちばん。', '北海道の夏の正解。'),
+  W('4-9', 'apple', '名', 'りんご', 'I want to buy a candy [apple] for you.', '君に、{りんご}飴を買いたい。', '赤いものを見ると、思い出す人がいる。'),
+  W('4-9', 'pay', '動', '払う、支払う', "You don't need to [pay]. Today is your day.", '{払わ}なくていい。今日は君の日だから。', 'おこづかい、全部この日のため。'),
+  W('4-9', 'money', '名', 'お金', 'I saved [money] to buy you a present.', 'プレゼントを買うために、{お金}をためた。', '貯金箱、空っぽ。悔いなし。'),
+  W('4-9', 'among', '前', '（三つ以上）の中に、〜の間で', 'I can find you [among] many people.', 'たくさんの人の{中から}、君を見つけられる。', 'オレンジが目印（第3章から継続）。'),
+  W('4-9', 'local', '形', '地元の、その土地の', '[Local] people know the best place to watch the fireworks.', '{地元の}人は、花火を見るいちばんの場所を知ってる。', 'ひみつの場所の、ひみつ度は低め。'),
+  W('4-9', 'near', '前', '〜の近くに（形容詞は、近い）', 'I want to stay [near] you.', '君の{近くに}いたい。', '人ごみで、はぐれないため。……ということにしておく。'),
+  W('4-9', 'front', '名', '前、正面（in front of〜＝〜の前に）', "Let's go to the [front] to see better.", 'よく見えるように、{前}に行こう。', '前に行くほど、手をつなぐ理由が増える。'),
+  /* ---- 第4章 第10話 いつもの川で ---- */
+  W('4-10', 'river', '名', '川', 'I like running along the [river] with you.', '君と{川}沿いを走るのが好き。', '毎朝六時。雨の日以外。'),
+  W('4-10', 'view', '名', '眺め、景色、意見', 'This is the best place to enjoy the [view].', 'ここは、{眺め}を楽しむのにいちばんの場所。', '眺めているのは、景色じゃない。'),
+  W('4-10', 'hotel', '名', 'ホテル', "We don't need a [hotel] to see the fireworks.", '花火を見るのに、{ホテル}はいらない。', '屋上より、土手。'),
+  W('4-10', 'instead', '副', 'そのかわりに（instead of〜＝〜のかわりに）', "Let's walk [instead] of taking the bus.", 'バスに乗る{かわりに}、歩こう。', '歩けば、一緒の時間がのびる。'),
+  W('4-10', 'color', '名', '色', 'I like wearing your [color].', '君の{色}を身につけるのが好き。', '靴、帽子。オレンジの面積が増えていく。'),
+  W('4-10', 'green', '形', '緑色の（名詞は、緑）', 'Walking on the [green] grass feels good.', '{緑の}芝生を歩くのは、気持ちいい。', '土手の芝生。二人分の足あと。'),
+  W('4-10', 'yellow', '形', '黄色の（名詞は、黄色）', 'The [yellow] fireworks looked like stars.', '{黄色い}花火が、星みたいだった。', '空より、横顔を見ていた。'),
+  W('4-10', 'white', '形', '白い（名詞は、白）', 'I keep your [white] headband in my pencil case.', '君の{白い}はちまき、筆箱に入れてる。', 'お守り。受験の。……ということになっている。'),
+  W('4-10', 'orange', '形', 'オレンジ色の（名詞は、オレンジ）', 'Your [orange] cap is easy to find.', '君の{オレンジの}帽子は、見つけやすい。', 'どこにいても、見つけられる。'),
+  W('4-10', 'most', '副', 'いちばん、もっとも（the most＋形容詞）', 'This is the [most] beautiful night of the summer.', 'この夏で、{いちばん}きれいな夜。', '比べるのは第5章。でも今夜は、いちばん。'),
+  /* ---- 第4章 第11話 聞こえなかった ---- */
+  W('4-11', 'own', '形', '自分自身の（my own〜＝自分の〜）', 'I made it with my [own] hands.', '{自分の}手で作った。', '字が、四月より格段にきれい。'),
+  W('4-11', 'just', '副', 'ただ〜だけ、ちょうど、たった今', 'I [just] want to be with you.', '{ただ}君といたいだけ。', '「ただ」が、ただじゃない。'),
+  W('4-11', 'love', '動', '愛する、大好きだ（名詞は、愛）', 'I [love] watching the stars with you.', '君と星を見るのが、{大好き}。', '言い切った。顔は見せない。'),
+  W('4-11', 'off', '副', '離れて、（電気などが）消えて', "Turn [off] the light. The fireworks are starting.", '明かりを{消して}。花火が始まる。', '暗くなったら、手が近くなる。'),
+  W('4-11', 'again', '副', 'また、もう一度', 'I want to come here [again] next year.', '来年も、{また}ここに来たい。', '「また」が「毎年」になる予定。'),
+  W('4-11', 'quickly', '副', 'すばやく、すぐに', 'Summer went by so [quickly].', '夏は、{あっという間に}過ぎた。', '楽しい時間の、速さの法則。'),
+  W('4-11', 'less', '副', 'より少なく、〜ほど…でない', "I'm [less] nervous when you are with me.", '君がいると、緊張が{少なくなる}。', 'ただし、手をつないだときは例外。'),
+  W('4-11', 'dinner', '名', '夕食、晩ごはん', "Let's eat [dinner] together after the fireworks.", '花火のあと、一緒に{晩ごはん}を食べよう。', '晩ごはんは、とうもろこしとりんご飴。'),
+  W('4-11', 'memory', '名', '思い出、記憶', 'This summer will be my best [memory].', 'この夏は、いちばんの{思い出}になる。', '保存先は、心と、スマホと、はがき。'),
+  W('4-11', 'another', '形', 'もう一つの、別の', "Let's make [another] plan for next summer.", '来年の夏の、{もう一つの}計画を立てよう。', '計画が、毎年ふえていく。'),
+  /* ---- 第4章 第12話 夏は、まだ終わってない ---- */
+  W('4-12', 'already', '副', 'もう、すでに', "It's [already] time to go home.", '{もう}帰る時間。', '「もう」が口ぐせになる、放課後。'),
+  W('4-12', 'result', '名', '結果、成績', 'I was happy to see the [result].', '{結果}を見て、うれしかった。', '七十八点。額に入れたい。'),
+  W('4-12', 'almost', '副', 'ほとんど、もう少しで', 'You [almost] got eighty points!', '君、{ほとんど}八十点！', 'あと二点。次は、きっと。'),
+  W('4-12', 'history', '名', '歴史', 'I like learning about [history] with you.', '君と{歴史}を学ぶのが好き。', '二人の歴史も、ノートにまとめてある。'),
+  W('4-12', 'society', '名', '社会', 'I want to help [society] someday.', 'いつか、{社会}の役に立ちたい。', 'まず、隣の人の英語の役に立つ。'),
+  W('4-12', 'badminton', '名', 'バドミントン', 'Playing [badminton] with you was fun.', '君と{バドミントン}をするのは楽しかった。', 'テニスのかわり。結局、なんでも楽しい。'),
+  W('4-12', 'since', '接', '〜だから、〜以来', "[Since] it's raining, let's study inside.", '雨が降っている{から}、中で勉強しよう。', '雨の日の図書室。第2章から変わらない。'),
+  W('4-12', 'member', '名', '一員、メンバー', 'I want to be a [member] of the English play.', '英語劇の{メンバー}になりたい。', '動機は、英語ではない（たぶん）。'),
+  W('4-12', 'daily', '形', '毎日の、日常の', 'Studying English is part of my [daily] life.', '英語の勉強は、{毎日の}生活の一部。', '日常の、もう半分は隣の人。'),
+  W('4-12', 'yet', '副', '（否定文で）まだ、（疑問文で）もう', "I'm not ready to say it [yet].", '{まだ}言う準備ができていない。', '何を、とは聞かない。見守る者のマナー。'),
 ];
 const WMAP = Object.fromEntries(WORDS.map(w => [w.id, w]));
 /** 意味が近くて、選択肢に並べると答えが2つになる組（並べない） */
-const NEAR = [['hard', 'difficult'], ['learn', 'study'], ['learn', 'remember'], ['word', 'language'], ['letter', 'message'], ['phone', 'call'], ['read', 'study']];
+const NEAR = [['hard', 'difficult'], ['learn', 'study'], ['learn', 'remember'], ['word', 'language'], ['letter', 'message'], ['phone', 'call'], ['read', 'study'],
+  ['speech', 'presentation'], ['topic', 'title'], ['early', 'soon'], ['express', 'show'], ['since', 'because'], ['card', 'letter'], ['email', 'letter'], ['email', 'card'],
+  ['pet', 'animal'], ['snack', 'food'], ['fruit', 'apple'], ['fruit', 'food'], ['salad', 'vegetable'], ['sandwich', 'bread'], ['corn', 'vegetable'], ['sure', 'course'], ['among', 'between'], ['story', 'speech']];
 
 /* 話ごとに at（いつ・どこ）と sum（この話で起きたことを1行）。sum は、次の話のはじめに「前回まで」として出す（v0.8） */
 const N = t => ({ k: 'n', t }), V = t => ({ k: 'v', t }), Y = t => ({ k: 's', w: 'yota', t });
@@ -1624,7 +1760,337 @@ const CHAPTERS = [
       N('あなたは返信した。「全部合ってる。自分で読めたね」'),
     ] },
   },
-  { id: 'c4', no: 4, month: '8月', title: '夏期講習と花火', grammar: '不定詞・動名詞', plan: 120 },
+  { id: 'c4', no: 4, month: '8月', title: '夏期講習と花火', grammar: '不定詞・動名詞', test: true,
+    eps: [
+      { id: '4-1', title: 'となりの席、空いてる？', at: '七月二十七日（月）・夏期講習の初日、三年の教室',
+        sum: '夏期講習の初日、陽太が初めて早く来た。となりの席を、透のために取っておくために。',
+        lines: [
+        N('七月二十七日。夏期講習の初日。始まりは八時半。'),
+        N('七時四十分。三年の教室に、もう陽太がいた。'),
+        V('陽太くんが、いちばん乗り。まず、時計がこわれていないか確かめた。'),
+        N('扉が開いて、透が入ってきた。教室の時計と陽太を、二回ずつ見くらべる。'),
+        E("Look at the [clock]. You came [early]. ...That's new.", '{clock|時計}を見て。{early|早く}来たんだ。……初めてだね。'),
+        Y('うるせえ。……たまたまだよ。'),
+        N('陽太のとなりの席にだけ、オレンジのタオルが一枚、置いてあった。'),
+        E('Is this seat [free]?', 'この席、{free|空いてる}？'),
+        GATE,
+        Y('……取っといた。お前の席。'),
+        K(E('You came early to [save] this seat for me?', '僕の席を{save|取っておく}ために、早く来たの？'), 2),
+        V('席取り合戦。勝ったのは、席を取ってもらった側。'),
+        P(N('透がとなりに座ると、陽太の筆箱から、白い布の端がのぞいていた。')),
+        E('...Is that my headband?', '……それ、僕のはちまき？'),
+        K(Y('お守り！ 受験の！')),
+        V('体育祭のはちまきが、お守りに格上げされていた。'),
+        N('一時間目は理科。'),
+        E('Every morning, we have a [science] [quiz]. [Thirty] questions.', '毎朝、{science|理科}の{quiz|小テスト}。{thirty|三十}問。'),
+        N('陽太のペンが、十問目で止まった。透が、自分のノートを少しだけ寄せる。'),
+        E("You [need] to [solve] this one first. ...Look. It's easy.", 'まず、これを{solve|解く}{need|必要がある}。……ほら。簡単だよ。'),
+        Y('……お前が言うと、なんでも簡単に聞こえる。'),
+        E('We have a lot of [homework] to do this summer.', 'この夏は、やる{homework|宿題}がたくさんある。'),
+        K(E("Tomorrow, I'll come earlier to save your seat.", '明日は僕がもっと早く来て、君の席を取っておく。')),
+        Y('じゃあ俺は、もっと早く来る。'),
+        V('明日の朝、七時半の教室。観測、決定。'),
+      ] },
+      { id: '4-2', title: 'オレンジの帽子', at: '八月一日（土）・朝六時の川沿いと、公園のラジオ体操',
+        sum: '夏の朝のランニングにラジオ体操が加わった。寝不足の透に、陽太が自分の帽子をかぶせた。',
+        lines: [
+        N('八月一日、土曜日。朝六時の川沿い。'),
+        N('七月から続くランニング。先を行く透の足もとには、オレンジのシューズ。'),
+        E('[Running|run] every morning is good for your [health].', '毎朝{run|走る}のは、{health|体}にいい。'),
+        N('公園に入ると、首からカードを下げた子どもたちが集まっていた。'),
+        V('私は町内会のスタンプ係。母から当番が回ってきた。偶然です。'),
+        E('...[Radio] exercises? Everyone moves to the [music]?', '……{radio|ラジオ}体操？ みんな、{music|音楽}に合わせて動くの？'),
+        N('ピアノの音が鳴った瞬間、陽太の腕が勝手に回りはじめた。'),
+        E('My [body] remembers it! Every summer!', '{body|体}が覚えてる！ 毎年の夏！', 'yota'),
+        GATE,
+        V('ラジオ体操の第二。誰も覚えていないのに、透くんだけ完璧。ゆうべ動画で予習したらしい。'),
+        E('The [weather] report said it would be thirty degrees today.', '{weather|天気}予報だと、今日は三十度。'),
+        P(N('ラジオ体操の第二の途中で、透の足がふらついた。')),
+        Y('おい、トオル！'),
+        N('陽太が透の肩を支えて、木かげのベンチまで連れていった。'),
+        E("...I didn't [sleep] well. I stayed up to make your quiz.", '……あまり{sleep|寝て}ない。君の小テストを作ってたから。'),
+        Y('バカ！ 小テストより寝ろ！'),
+        E('[Drink] this [water]! Now!', 'この{water|水}、{drink|飲め}！ 今すぐ！', 'yota'),
+        K(N('陽太が、自分のオレンジの帽子を、透の頭にかぶせた。')),
+        K(E("Thank you for giving me your [cap]. ...I'll wear it every morning.", '{cap|帽子}をくれて、ありがとう。……毎朝、かぶる。'), 2),
+        Y('……やるとは言ってねえ。……まあ、いいけど。'),
+        N('スタンプの列に並んだ陽太は、なぜかカードを二枚出した。一枚は、透の分。'),
+        V('紺の人の頭に、オレンジ。……もう、色の境目がない。'),
+      ] },
+      { id: '4-3', title: '「作りすぎた」の番', at: '八月四日（火）・夏期講習の昼休み、夏の開館日の図書室の前のベンチ',
+        sum: '夏の開館日の図書室の前で、透の手作りのお弁当。「作りすぎた」は、陽太のお母さんのまね。',
+        lines: [
+        N('八月四日。夏期講習の昼休み。'),
+        N('夏休みの図書室は、火曜と木曜だけ開く。あなたは、今日の当番だ。'),
+        E("The library is [open] in summer, too? Good. ...Let's eat here.", '図書室、夏も{open|開いてる}んだ。よかった。……ここで食べよう。'),
+        V('図書室は飲食禁止。だから入口の前のベンチ。図書委員として、ぎりぎり見逃せる位置。'),
+        N('透が、かばんから包みを二つ出した。'),
+        E('I made two lunch [boxes|box]. ...I made too much.', 'お弁当{box|箱}、二つ作った。……作りすぎた。'),
+        GATE,
+        P(N('「作りすぎた」。体育祭の日、陽太のお母さんが言ったのと、同じことばだった。')),
+        V('お返しの作法が、完璧。'),
+        E('I made [sandwiches|sandwich]. I cut the [bread] myself.', '{sandwich|サンドイッチ}。{bread|パン}は自分で切った。'),
+        N('サンドイッチの横に、からあげ。少しだけ、黒い。'),
+        E("I tried to [fry] chicken like your mother. ...It's a little black.", '君のお母さんみたいに、からあげを{fry|揚げ}てみた。……ちょっと黒い。'),
+        K(Y('黒いのが、いちばんうまい。')),
+        N('陽太は、いちばん黒いのから先に食べた。'),
+        E('Eat the [salad], too. [Vegetables|vegetable] are good for you.', '{salad|サラダ}も食べて。{vegetable|野菜}は体にいい。'),
+        Y('……トマトだけな。'),
+        E('Is it [enough]? ...And this is a [snack] for later. For studying.', '{enough|足りる}？ ……これは、あとの{snack|おやつ}。勉強用。'),
+        N('陽太が、口いっぱいのまま言った。「お前、昼はいつもパン一個だったよな」'),
+        K(E('Eating [alone] was OK. ...But eating with you is better.', '{alone|ひとりで}食べるのも平気だった。……でも、君と食べるほうがいい。'), 2),
+        Y('……じゃあ、講習のある日は毎日な。'),
+        V('ひとりの昼ごはん、終了のお知らせ。'),
+      ] },
+      { id: '4-4', title: '花火の日に生まれた', at: '八月八日（土）・陽太の家のリビング',
+        sum: '約束どおり陽太の家へ。妹のひまりの質問で、透の誕生日が花火大会の日だと分かった。',
+        lines: [
+        N('八月八日、土曜日。体育祭の日の「今度」が、今日になった。'),
+        N('あなたも一緒だ。陽太の妹のひまり（小三）に、「図書委員の人、絵本持ってきて」と頼まれたらしい。'),
+        V('招待の宛名は「図書委員の人」。名前で呼ばれないのには、もう慣れた。'),
+        N('玄関を開けるなり、陽太が奥に向かって叫んだ。'),
+        E('[Mom|mom]! Toru is here! ...[Welcome] to my house!', '{mom|母ちゃん}！ トオル来た！ ……俺んちへ{welcome|ようこそ}！', 'yota'),
+        E('I brought some [fruit]. ...I promised to bring a present.', '{fruit|果物}、持ってきた。……おみやげを持ってくるって、約束したから。'),
+        V('手みやげの作法まで、完璧。'),
+        N('リビングの棚に、写真がずらりと並んでいた。'),
+        E('Your [living] room is full of photos. ...Is this you? You were so [cute].', '{living|リビング}、写真でいっぱい。……これ、君？ すごく{cute|かわいかった}。'),
+        GATE,
+        Y('ちっちゃいころの話はいいだろ！'),
+        K(E('...You still are, a little.', '……今も、ちょっとね。')),
+        N('陽太が、固まった。'),
+        V('（私も、固まった）'),
+        E('Is this your [grandfather]? You have the same smile.', 'これ、{grandfather|おじいさん}？ 笑った顔が、そっくり。'),
+        N('ひまりが、透のシャツのすそを引っぱった。「ピアノ、弾ける？ ひまり、習いたいの」'),
+        E("Your [sister] wants to learn to play the [piano]? ...I'm happy to teach her.", '{sister|妹さん}、{piano|ピアノ}を習いたいの？ ……喜んで教える。'),
+        N('リビングのピアノで、透が一曲弾いた。ひまりは、口を開けたまま聞いていた。'),
+        V('ひまりちゃん（小三）、質問の天才。次の質問が来る。'),
+        N('ひまり「トオルくん、誕生日いつ？」'),
+        P(E('I was [born] in August. ...On the sixteenth.', '八月に{born|生まれた}。……十六日。')),
+        N('ひまり「花火の日だ！」'),
+        Y('は!? 来週じゃん！ 早く言えよ！'),
+        E("I didn't tell anyone. My [birthday] isn't a special day.", '誰にも言ってない。{birthday|誕生日}は、特別な日じゃないから。'),
+        N('陽太は少しのあいだ、何も言わなかった。それから、壁のカレンダーを見た。'),
+        K(Y('……来週じゃん。特別な日にする。俺が。'), 2),
+        V('誕生日を、今、知った。十六日まで、八日。カウントダウンが始まった（私の）。'),
+      ] },
+      { id: '4-5', title: 'トラを見て、僕じゃなくて', at: '八月十日（月）・夏期講習が休みの日、動物園（あなたのスマホに届く動画）',
+        sum: 'ひまりの付きそいで動物園へ。陽太から届く動画は、トラより透ばかり映っていた。',
+        lines: [
+        N('八月十日。夏期講習は休み。'),
+        N('昼、陽太からメッセージが来た。『妹の付きそいで動物園。トオルも来た。動画送る。英語のとこ訳して』'),
+        V('私は家で、宿題をしていた。……していた、はずだった。'),
+        N('一本目。入口の大きな看板の前。透の声。'),
+        E('This [zoo] is very [large]. We need a whole day to see everything.', 'この{zoo|動物園}、すごく{large|広い}。全部見るには、一日かかる。'),
+        E("The sign says, '[Adults|adult]: 800 yen. Junior high students: free.' ...We're not adults.", '看板には「{adult|大人}800円、中学生は無料」。……僕たちは、大人じゃない。'),
+        GATE,
+        N('二本目。岩の上で、ライオンが寝ている。'),
+        E('The [lion] is sleeping. ...It looks like you in class.', '{lion|ライオン}、寝てる。……授業中の君みたい。'),
+        V('授業中の陽太くんに似ているライオン。……似ている。'),
+        N('三本目。ガラスの向こうを、トラがゆっくり歩いていく。'),
+        E('The [tiger] is [bigger] than the lion.', '{tiger|トラ}は、ライオンより{bigger|大きい}。'),
+        N('ひまり「トラ、ペットにしたい！」'),
+        E("A tiger can't be a [pet], Himari. It's too [big].", 'トラはね、{pet|ペット}にはできないよ、ひまり。{big|大きすぎる}から。'),
+        E('Look, the giraffe is so [tall]. ...Taller than you, Yota.', '見て、キリン、すごく{tall|背が高い}。……陽太より高い。'),
+        P(N('四本目の終わり。陽太の声が「なあ、トオル。十六日――」と言いかけたところで、ひまりが「ライオン起きた！」と叫んだ。動画は、そこで切れていた。')),
+        K(N('写真が一枚。ひまりが二人の手を片方ずつ握って、三人で並んだ後ろ姿。')),
+        V('トラの動画が四本。トラが映っているのは、合計三秒。'),
+        N('最後の一本。レンズは、ずっと透のほうを向いていた。'),
+        K(E('Are you taking a video of me? Put your [smartphone] away. ...Look at the tiger, not me.', '僕を撮ってるの？ {smartphone|スマホ}しまって。……僕じゃなくて、トラを見て。'), 2),
+        V('訳した。全部。最後の一本の「僕じゃなくて」だけ、訳しながら天を仰いだ。'),
+      ] },
+      { id: '4-6', title: '「表す」って、なに', at: '八月十二日（水）・夏期講習の最終日、ローズ先生の英語',
+        sum: '夏の宿題は九月の英語スピーチ「My Dream」。陽太は「表す」の英語を聞き、中身は透に見せないと言う。',
+        lines: [
+        N('八月十二日。夏期講習の最終日。'),
+        N('最後の時間は、ローズ先生の英語。三年全員の合同だ。'),
+        E("Your summer homework is a [speech]. The [title] is 'My Dream.'", '夏の宿題は{speech|スピーチ}。{title|題}は「わたしの夢」。', 'alt'),
+        E('The [presentation] is in September. Choose a [topic] to talk about.', '{presentation|発表}は九月。話す{topic|話題}を選んでね。', 'alt'),
+        Y('夢……。英語で……。'),
+        E("A good speech is like a short [story]. Let's [continue] after the break.", 'いいスピーチは、短い{story|物語}みたいなもの。休み時間のあとに{continue|続けましょう}。', 'alt'),
+        GATE,
+        N('休み時間。陽太が、となりの透に小声で聞いた。'),
+        E("Toru. What does '[express]' mean?", 'トオル。「{express|エクスプレス}」って、どういう意味？', 'yota'),
+        E("It [means] 'to show your [feelings|feeling]' ...in words.", '「{feeling|気持ち}を見せること」……言葉で、って{means|意味}。'),
+        E('Which [part] of your speech is it for?', 'スピーチの、どの{part|部分}に使うの？'),
+        K(Y('……ひみつ。九月まで、お前には見せねえ。')),
+        N('透は少しだけ目を伏せて、それから、笑った。'),
+        K(E("...Then I'll wait. I'm good at waiting.", '……じゃあ、待つ。待つのは得意だから。'), 2),
+        V('待つのは得意。閉館まで待った人（第1章）が言うと、重みがちがう。'),
+        P(N('陽太のノートの端に、小さく「express ＝ 表す」。その下に、何か書いて、消したあと。')),
+        V('陽太くんが「表す」を知りたがっている。何を表すのかは、知らないふりをする。見守る者のマナー。'),
+        V('消しゴムで消しても、跡は残る。図書委員は、紙の跡に強い。……読まないけど。'),
+      ] },
+      { id: '4-7', title: '貸出票の裏の英語', at: '同じ日の夕方・図書室の貸出カウンター',
+        sum: '陽太が図書委員に「誘い方の英語」を聞いた。透は「誘われるのを待ってた」。花火は十六日。',
+        lines: [
+        N('同じ日の夕方。夏期講習のあとの図書室。あなたは貸出カウンターにいた。'),
+        N('陽太が、カウンターに両手をついた。声が、いつもの半分しかない。'),
+        Y('図書委員。……誘うって、英語でどう言う？'),
+        V('何に、とは聞かない。花火大会のポスターは、終業式の日から掲示板に貼ってある。'),
+        N('あなたは貸出票を一枚取って、裏に英語を書いた。'),
+        V('貸出票の裏は、本来、返却日を書くところです。'),
+        N('陽太は貸出票を持って、窓際の透の席へ。カウンターから、よく見える。'),
+        E('Toru! Do you have any [plans|plan] for the sixteenth?', 'トオル！ 十六日、{plan|予定}ある？', 'yota'),
+        E('...[Maybe]. Why?', '……{maybe|あるかも}。なんで？'),
+        P(N('陽太は、貸出票の裏を見ながら読んだ。あなたの字の英語だった。')),
+        E('Do you want to go to the fireworks with me?', '一緒に花火、行かない？', 'yota'),
+        GATE,
+        E('[Someone] in my class asked me yesterday. ...I said I was [busy].', 'きのう、クラスの{someone|人}に誘われた。……{busy|忙しい}って言った。'),
+        N('陽太の肩が、目に見えて下がった。'),
+        K(E("I wasn't busy. ...I was waiting for you to ask me.", '忙しくなかった。……君に誘われるのを、待ってた。'), 2),
+        V('（カウンターの下で、こぶしをにぎった）'),
+        E('I [never] saw Japanese fireworks. In London, we have them in November. ...Do you [ever] go with friends?', '日本の花火は、{never|一度も}見たことがない。ロンドンでは十一月なんだ。……君は、友だちと行くこと{ever|ある}？'),
+        K(Y('毎年、部活のやつらと。……今年は、お前と行きたい。')),
+        E("[Sure]. Let's meet at [five]. ...Should I bring [anything]?", '{sure|もちろん}。{five|五}時に会おう。……{anything|何か}持っていくもの、ある？'),
+        E("The sixteenth is [soon]. ...I can't wait.", '十六日、{soon|すぐ}だね。……待ちきれない。'),
+        V('誘ったのは陽太くん。英文は私。……共同制作。脚本家の気持ちが、分かった。'),
+        V('十六日、五時。……私の予定も、空いている。'),
+      ] },
+      { id: '4-8', title: 'ネットのない三日間', at: '八月十三日（木）・朝の駅のホームと、おじいちゃんの家に届いたはがき',
+        sum: 'お盆、陽太はおじいちゃんの家へ。ネットのない三日間、透は英語のはがきを書いた。',
+        lines: [
+        N('八月十三日。お盆の朝。駅のホーム。'),
+        N('陽太は三日間、おじいちゃんの家へ行く。リビングの写真の、あの人の家だ。'),
+        V('私も同じ電車。祖母の家へ。今回は、本当に偶然です。（この夏の「偶然」のうち、初めての本物）'),
+        N('改札の向こうから、紺のシャツが走ってきた。'),
+        K(E('I came to the [station] to say goodbye.', '見送りに、{station|駅}まで来た。')),
+        Y('三日だぞ!? 三日！'),
+        E('Let me [carry] your bag. ...The train leaves in [twenty] minutes.', 'かばん、{carry|持つ}よ。……電車は{twenty|二十}分後。'),
+        Y('じいちゃんち、山の中でさ。ネットつながんねえの。'),
+        E("No internet? Then I can't send you an [email]...", 'ネットがないの？ じゃあ、{email|メール}も送れない……。'),
+        GATE,
+        N('透は少し考えてから、顔を上げた。'),
+        E("I'll write you a [card]. A real one.", '{card|はがき}を書く。本物の。'),
+        Y('……おう。'),
+        K(E('Come back before the sixteenth.', '十六日までに、帰ってきて。')),
+        N('ドアが閉まる。ホームの紺色が、小さくなっていった。'),
+        N('――十四日の夜。山のふもとのコンビニから、陽太の写真が届いた。『電波ここだけ。トオルからはがき来た。今回も自分で読む』'),
+        P(N('はがきの英語の下に、鉛筆で、陽太の訳が書きこんであった。')),
+        E("When I lived [abroad], I didn't like summer. Now I do.", '{abroad|外国}に住んでいたころは、夏が好きじゃなかった。今は好き。', 'note', 'はがき'),
+        K(E('Someday, I want to [travel] with you. To see the [snow] in winter, and the flowers in [spring].', 'いつか、君と{travel|旅を}したい。冬の{snow|雪}と、{spring|春}の花を見に。', 'note', 'はがき'), 2),
+        E('P.S. I drew a [map]. Where should we watch the fireworks?', '追伸。{map|地図}を描いた。花火、どこで見る？', 'note', 'はがき'),
+        N('地図の川沿いに、陽太の字で、丸が一つ。'),
+        V('訳はほぼ合っている。abroad だけ「アブロード（？）」。……かわいいので直さない。'),
+      ] },
+      { id: '4-9', title: '人ごみの中で', at: '八月十六日（日）・夕方、河川敷の夜店（花火大会の日）',
+        sum: '透の誕生日、花火大会。甚平の二人と、とうきびとりんご飴。人ごみで、陽太が透の手を取った。',
+        lines: [
+        N('八月十六日、日曜日。花火大会の日。透の誕生日。'),
+        N('五時。橋のたもと。二人とも、陽太のお母さんが用意した甚平を着ていた。透は紺、陽太はオレンジに近い色。'),
+        V('甚平。陽太くんのお母さん、ありがとうございます。（私は家族と毎年来ている。今年は、目が離せない）'),
+        E('You look different without your [uniform].', '{uniform|制服}じゃないと、ちがって見える。'),
+        K(Y('お前もな。……紺、似合ってる。')),
+        E('Walking around a summer festival is so [exciting].', '夏祭りを歩くのって、すごく{exciting|わくわくする}。'),
+        N('河川敷に、夜店がずらりと並んでいる。しょうゆのこげるにおい。'),
+        Y('北海道の夏は、これ！ 焼きとうきび！'),
+        E('[Corn] with soy sauce? ...It smells so good.', '{corn|とうもろこし}に、しょうゆ？ ……すごくいいにおい。'),
+        GATE,
+        N('となりの屋台に、真っ赤なりんご飴。'),
+        E('This candy [apple] is red. ...Like your headband.', 'この{apple|りんご}飴、赤い。……君のはちまきみたい。'),
+        V('りんご飴の赤＝はちまきの赤。透くんの辞書、第二版。'),
+        Y('今日は俺が出す。'),
+        E("You don't have to [pay]. I have [money].", '{pay|払わ}なくていいよ。{money|お金}、持ってる。'),
+        Y('いいから！ 誕生日のやつは、財布しまえ！'),
+        N('花火の時間が近づくにつれて、人がどんどん増えていく。'),
+        E('Yota? Where are you? I lost you [among] all these people...', '陽太？ どこ？ この人たちの{among|中で}、君を見失った……。'),
+        P(N('陽太が人ごみをかき分けて、透の手をつかんだ。')),
+        K(Y('はぐれんな。……今日は、お前の日なんだから。'), 2),
+        E("[Local] people know a secret place! I'm a local!", '{local|地元}の人は、ひみつの場所を知ってる！ 俺、地元！', 'yota'),
+        E('Is it [near] here? ...Everyone is going to the [front] of the bridge.', 'この{near|近く}？ ……みんな、橋の{front|前}のほうに行ってるけど。'),
+        N('陽太は答えずに、手を離さないまま歩き出した。'),
+        V('手。手です。……図書委員会に報告する義務は、ない。'),
+      ] },
+      { id: '4-10', title: 'いつもの川で', at: '同じ夜・花火のはじまり、いつもの川沿い',
+        sum: '「いちばんの眺めはホテルの屋上」。陽太が連れてきたのは、毎朝ふたりで走る川沿いだった。',
+        lines: [
+        N('人ごみを抜けると、急に静かになった。'),
+        E('People say the [hotel] by the station has the best [view].', '駅の横の{hotel|ホテル}が、いちばん{view|眺め}がいいんだって。'),
+        Y('ホテルは高えし、人多いし。こっち。'),
+        N('土手をのぼる。街灯の下に、見覚えのある道。'),
+        P(N('川沿いの道。毎朝六時に、二人で走る、あの道だった。')),
+        E('This is our [river]. ...We run here every morning.', 'ここ、僕たちの{river|川}だ。……毎朝、走ってる。'),
+        N('はがきの地図に、陽太がつけた丸。その場所に、二人は座った。'),
+        E('We came here [instead] of going to the hotel? ...I like this better.', 'ホテルに行く{instead|かわりに}、ここに来たの？ ……こっちのほうがいい。'),
+        V('うちの家族は、毎年ここで見る。偶然です。（本当に。こればかりは本当に）'),
+        GATE,
+        N('ひゅう、と細い音。それから、空がひらいた。'),
+        E('[Green], [yellow], [white]...', '{green|緑}、{yellow|黄色}、{white|白}……'),
+        N('透は、ひらく色を一つずつ数えていた。そして、止まった。'),
+        K(E('...And [orange]. Your [color].', '……それと、{orange|オレンジ}。君の{color|色}。')),
+        K(N('花火がひらくたび、陽太の横顔が光る。透は、空じゃなくて、そっちを見ていた。')),
+        E('This is the [most] beautiful view in the world.', '世界で{most|いちばん}きれいな眺めだ。'),
+        Y('だろ？ ……まあ、毎朝見てる川だけどな。'),
+        K(E("Watching fireworks from our river... It's the best birthday present.", '僕たちの川から、花火を見る……。いちばんの誕生日プレゼントだ。'), 2),
+        V('この川、朝は二人の足音、夜は花火の音。私の観測地点は、どちらも同じ土手。'),
+      ] },
+      { id: '4-11', title: '聞こえなかった', at: '同じ夜・最後の大玉の前と、そのあと',
+        sum: '陽太の手作りの単語帳。最後の大玉の音で、陽太の言葉は透にも、あなたにも聞こえなかった。',
+        lines: [
+        N('花火の合間。陽太が、巾着から小さな紙袋を出した。'),
+        E('Happy birthday! This is my [own] word book!', '誕生日おめでとう！ 俺の{own|手作りの}単語帳！', 'yota'),
+        E('You made this? ...[Just] for me?', 'これ、作ったの？ ……僕の{just|ためだけに}？'),
+        GATE,
+        K(N('単語帳の一枚目は library。陽太の字で、例文は「I met you in the library.」')),
+        V('六月に透くんがくれた単語帳の、逆。……ページの数だけ、夜があったはず。'),
+        N('ぱらぱらとめくる。最後のページだけ、白いままだった。'),
+        Y('そこは……まだ。'),
+        K(E("I [love] watching fireworks. ...I didn't know that before today.", '花火を見るの、{love|好きだ}。……今日まで知らなかった。')),
+        E('The lights went [off]. The last one is coming.', '明かりが{off|消えた}。最後のが来る。'),
+        N('河川敷が、しんと静かになった。'),
+        Y('……トオル、俺さ――'),
+        P(N('ドン。最後の大玉。陽太の声は、そこで消えた。……三列うしろの私にも、聞こえなかった。')),
+        E('What did you say? ...It ended so [quickly]. Say it [again]!', 'なんて言ったの？ ……{quickly|すぐ}終わっちゃった。{again|もう一回}言って！'),
+        Y('……なんでもねえ！'),
+        V('聞こえなかった。図書委員の耳をもってしても。……花火大会の実行委員会に、苦情を入れたい。'),
+        E("I speak English when I'm nervous. ...Tonight, I'm [less] nervous than I thought.", '緊張すると英語になる。……今夜は、思ったより緊張{less|していない}。'),
+        V('（全部、英語でしゃべっている）'),
+        E("Corn and an apple for [dinner]. ...It'll be my best [memory].", '{dinner|晩ごはん}は、とうもろこしとりんご飴。……いちばんの{memory|思い出}になる。'),
+        K(E('I want [another] summer like this. ...With you. Every year.', 'こんな夏が、{another|もう一回}ほしい。……君と。毎年。'), 2),
+        V('白いページと、聞こえなかったひと言。……この二つは、たぶん同じものだ。'),
+      ] },
+      { id: '4-12', title: '夏は、まだ終わってない', at: '八月十八日（火）・二学期の始業式、放課後の図書室',
+        sum: '北海道の夏休みは短い。始業式の日、夏のテストは78点。文化祭の英語劇のメンバー募集に、二人とも手を挙げた。',
+        lines: [
+        N('八月十八日。二学期の始業式。'),
+        V('北海道の夏休みは、短い。お盆が終わると、もう学校。'),
+        N('放課後の図書室。いつもの窓際に、いつもの二人。'),
+        E("Summer is [already] over. ...Hokkaido's summer vacation is short.", '{already|もう}夏が終わり。……北海道の夏休みは短い。'),
+        N('陽太が、答案を机に置いた。音が大きい。'),
+        P(E('The [result] of the summer test! Seventy-eight! [Almost] eighty!', '夏のテストの{result|結果}！ 七十八点！ {almost|ほぼ}八十！', 'yota')),
+        V('十八点（四月）→六十二点（七月）→七十八点（八月）。成長曲線を、額に入れて飾りたい。'),
+        GATE,
+        N('陽太は、終業式の日のメモを出した。夏の計画の、答え合わせだ。'),
+        E('Our museum report is about Japanese [history]. ...And [society] long ago.', '博物館のレポートは、日本の{history|歴史}。……それと、昔の{society|社会}。'),
+        E("We didn't play tennis. We played [badminton] instead. ...You were good at teaching.", 'テニスはしなかった。かわりに{badminton|バドミントン}。……君、教えるのがうまかった。'),
+        Y('ピザと映画は、まだだな。'),
+        E("[Since] summer is over, let's make a new plan.", '夏が終わった{since|から}、新しい計画を立てよう。'),
+        K(E('Studying with you is part of my [daily] life now.', '君と勉強するのは、もう{daily|毎日}の一部だ。')),
+        N('図書室の扉が開いて、ローズ先生が顔を出した。'),
+        P(E('Who wants to be a [member] of the English play for the school festival?', '文化祭の英語劇、{member|メンバー}になりたい人は？', 'alt')),
+        Y('はい！'),
+        N('少しおくれて、透の手も挙がった。'),
+        V('英語劇のメンバー募集。陽太くんの手が、いちばん早く挙がった。理由は、英語ではないと思う。'),
+        K(E("Summer is over. ...But our plan isn't finished [yet].", '夏は終わった。……でも、僕たちの計画は、{yet|まだ}終わってない。'), 2),
+        N('掲示板に、新しい紙。「三年　英語劇『ロミオとジュリエット』　メンバー募集」。'),
+        V('ジュリエット役、未定。……いやな予感と、いい予感が、同時にする。'),
+        V('第4章、完。……の前に、章末テスト。受からないと、二学期が来ない。（もう来ている）'),
+        N('――第4章 おわり。'),
+      ] },
+    ],
+    bonus: { title: 'おまけ：透のスピーチ原稿', at: '始業式の次の日・図書室（英語の原稿と、日本語の訳）', lines: [
+      N('始業式の次の日。透が、二つ折りの紙を差し出した。「スピーチの日本語の訳。……合ってるか、見てほしい」'),
+      V('透くんの日本語を、私が見る。立場が、入れかわった。'),
+      E('My dream is to go to Seiryo High School.', '僕の夢は、星陵高校に行くことです。', 'note', 'スピーチの原稿'),
+      E('In April, I [just] wanted to read books [alone].', '四月、僕は{alone|ひとりで}本を読みたい{just|だけ}でした。', 'note', 'スピーチの原稿'),
+      E('Then [someone] sat next to me in the library.', 'そのとき、図書室で、{someone|誰か}が隣に座りました。', 'note', 'スピーチの原稿'),
+      K(E('Studying with him every day is the best [part] of my day.', '彼と毎日勉強するのが、一日でいちばんいい{part|時間}です。', 'note', 'スピーチの原稿')),
+      K(E('My dream is to watch the fireworks with him every year.', '僕の夢は、毎年、彼と花火を見ることです。', 'note', '線で消した行'), 2),
+      V('英語は、線で消してある。日本語の訳は、消し忘れている。'),
+      E('So my dream is to go to Seiryo with my best friend.', 'だから僕の夢は、いちばんの友だちと星陵に行くことです。', 'note', 'スピーチの原稿'),
+      N('あなたは「全部合ってる」と言って、日本語の一行にだけ、そっと線を引いて返した。'),
+      V('見守る係は、ときどき、守る係になる。'),
+    ] },
+  },
   { id: 'c5', no: 5, month: '9月', title: '文化祭『ロミオとロミオ』', grammar: '比較', plan: 120 },
   { id: 'c6', no: 6, month: '10月', title: '幼なじみ、襲来', grammar: '受け身', plan: 120 },
   { id: 'c7', no: 7, month: '11月', title: '模試の判定はE', grammar: '現在完了', plan: 120 },
@@ -1632,7 +2098,7 @@ const CHAPTERS = [
   { id: 'c9', no: 9, month: '1月', title: '初詣と合格祈願', grammar: '間接疑問・いろいろな文型', plan: 120 },
   { id: 'c10', no: 10, month: '2月', title: '入試前夜', grammar: '入試に出る熟語・会話の表現', plan: 120 },
   { id: 'c11', no: 11, month: '3月', title: '合格発表', grammar: '総復習（仮定法を含む）', plan: 120 },
-  { id: 'c12', no: 12, month: '終章', title: '桜の下で、今度は僕が', grammar: '総まとめ', plan: 112 },
+  { id: 'c12', no: 12, month: '終章', title: '桜の下で、今度は僕が', grammar: '総まとめ', plan: 111 },
 ];
 const EPS = CHAPTERS.flatMap(c => (c.eps || []).map(ep => { ep.ch = c; return ep; }));
 CHAPTERS.forEach(c => { if (c.bonus) c.bonus.ch = c; });
@@ -1640,7 +2106,9 @@ CHAPTERS.forEach(c => { if (c.bonus) c.bonus.ch = c; });
 const EP_BG = { '1-1': 'eve', '1-2': 'day', '1-3': 'dusk', '1-4': 'eve', '2-1': 'rain', '2-2': 'day', '2-3': 'dusk', '2-4': 'day', '2-5': 'rain', '2-6': 'eve',
   '2-7': 'day', '2-8': 'eve', '2-9': 'day', '2-10': 'eve', '2-11': 'dusk', '2-12': 'eve',
   '3-1': 'day', '3-2': 'dusk', '3-3': 'rain', '3-4': 'day', '3-5': 'eve', '3-6': 'day', '3-7': 'eve', '3-8': 'night',
-  '3-9': 'day', '3-10': 'day', '3-11': 'eve', '3-12': 'eve' };
+  '3-9': 'day', '3-10': 'day', '3-11': 'eve', '3-12': 'eve',
+  '4-1': 'day', '4-2': 'day', '4-3': 'day', '4-4': 'eve', '4-5': 'day', '4-6': 'day', '4-7': 'eve', '4-8': 'day',
+  '4-9': 'dusk', '4-10': 'night', '4-11': 'night', '4-12': 'eve' };
 EPS.forEach(ep => { ep.bg = EP_BG[ep.id] || 'eve'; });
 
 /* ---- 場面カード（トレカ・v0.9）。がんばりで必ず手に入る（くじ引きにしない。中学生向けなので運まかせの仕組みは入れない）
@@ -1657,39 +2125,54 @@ const CARDS = [
   { id: 'kb-c1', bonus: 'c1', t: '紺色のノート', w: 'note', q: '毎日、彼の笑顔が見たい。', en: 'I want to see his smile every day.', cap: '読んではいけない四月八日。そっと窓際に戻した。', bg: 'day', mo: 'book', img: 1 },
   { id: 'kc-c1', ch: 'c1', t: '重なった、二つの夢', w: 'toru', q: 'それは僕の夢でもある。', en: "That's my dream, too.", cap: '夕暮れの図書室。窓際の席は、ふたり分。', bg: 'eve', mo: 'auto_awesome', img: 1 },
   { id: 'k2-1', ep: '2-1', sc: 'kasa', t: '相合傘', w: 'toru', q: '……君の手はあたたかい。', en: '...your hand is warm.', cap: '六月の昇降口。一本の傘、二人の肩。', bg: 'rain', mo: 'umbrella', img: 1 },
-  { id: 'k2-2', ep: '2-2', t: '最後のページ', w: 'note', q: '君は、何度でも読み返したい手紙みたいな人だ。', en: 'You are a letter I want to read again and again.', cap: '最後のページだけ、少しだけ丁寧な字。', bg: 'day', mo: 'edit_note' },
-  { id: 'k2-3', ep: '2-3', t: '十時の電話', w: 'toru', q: 'ただ、君がいなくてさみしいだけ。', en: 'I just miss you.', cap: '日曜の夜。鳴るまでの、長い五分。', bg: 'night', mo: 'smartphone' },
-  { id: 'k2-4', ep: '2-4', t: 'いつもの席', w: 'yota', q: '俺、トオルの隣がいちばん集中できるんだよな。', en: '', cap: 'ひそひそ声の教室を抜けて、図書室の奥へ。', bg: 'day', mo: 'event_seat' },
-  { id: 'k2-5', ep: '2-5', t: '撮り直した一枚', w: 'toru', q: '待って。もう一回撮って。目をつぶった。', en: 'Wait. Take it again. I closed my eyes.', cap: '雨の日曜、カフェの窓辺。ちゃんと隣に写りたかった。', bg: 'rain', mo: 'photo_camera' },
-  { id: 'k2-6', ep: '2-6', t: '四月の声', w: 'toru', q: '僕にとっては、特別だった。', en: 'It was special to me.', cap: '雨上がりの窓。名前を教えてくれた、あの日のこと。', bg: 'eve', mo: 'wb_twilight' },
-  { id: 'k2-7', ep: '2-7', t: '筆箱のしおり', w: 'note', q: '君はやり方を知ってる。僕は君を信じてる。', en: 'You know the way. I believe in you.', cap: 'テストの朝。背中が、まっすぐになる。', bg: 'day', mo: 'bookmark' },
-  { id: 'k2-8', ep: '2-8', t: '名前のお礼', w: 'toru', q: 'いつものように「トオル」って呼んで。', en: 'Call me Toru as you always do.', cap: '六十二点のお礼は、名前をひとつ。何度でも。', bg: 'eve', mo: 'chat_bubble' },
-  { id: 'k2-9', ep: '2-9', t: 'ゆっくりの日本語', w: 'toru', q: '君と日本語で話すのが好きだ。ほかとは違う。', en: "I like speaking Japanese with you. It's different.", cap: '速い英語の輪をはなれて、ゆっくりの日本語へ。', bg: 'day', mo: 'translate' },
-  { id: 'k2-10', ep: '2-10', t: '夕日のピアノ', w: 'toru', q: 'みんなにやさしいわけじゃない。……君にだけ。', en: "I'm not kind to everyone. ...Only to you.", cap: '伴奏と指揮。呼吸が、少しずつそろっていく。', bg: 'dusk', mo: 'piano' },
-  { id: 'k2-11', ep: '2-11', t: '三つ目の理由', w: 'toru', q: 'それを見てるのが、好きだった。', en: 'I liked watching that.', cap: '雨、図書室、それから――まだ言えない。', bg: 'eve', mo: 'format_list_numbered' },
-  { id: 'k2-12', ep: '2-12', t: '今のところは', w: 'toru', q: '……毎年。君の友だちとして。……今のところは。', en: '...Every year. As your friend. ...For now.', cap: '赤と白のはちまき。ふたりの夏が、始まる。', bg: 'dusk', mo: 'flag' },
-  { id: 'kb-c2', bonus: 'c2', t: '送信ボタンの前で', w: 'yota', q: '君は僕のいちばんの友だち。……今は。', en: 'You are my best friend. ...Now.', cap: '終業式の夜。送るまでに、三分かかった。', bg: 'night', mo: 'send' },
-  { id: 'kc-c2', ch: 'c2', t: '雨が好きになった', w: 'toru', q: '雨は好きだ。今は、もっと好き。', en: 'I like the rain. Now I like it more.', cap: '雨の音が、少しだけ大きくなった。', bg: 'rain', mo: 'water_drop' },
-  { id: 'k3-1', ep: '3-1', t: '四月からの六時', w: 'toru', q: '四月に、ここで走りはじめた。……ある朝、君をここで見たから。', en: 'I started running here in April. ...Because I saw you here one morning.', cap: '七月の川沿い。三か月ぶんの朝が、やっと隣に並んだ。', bg: 'day', mo: 'wb_sunny' },
-  { id: 'k3-2', ep: '3-2', t: 'アンカーは、君と僕', w: 'toru', q: '各チーム、走るのは四人。……最後の二人が、君と僕。', en: 'Each team has four runners. ...The last two are you and me.', cap: '黒板の名前の列。いちばん下に、赤と白がひとつずつ。', bg: 'dusk', mo: 'checklist' },
-  { id: 'k3-3', ep: '3-3', t: '後ろじゃなくて、隣', w: 'toru', q: '本当は、もっと速くなりたい。そうすれば、君の後ろじゃなくて、隣を走れる。', en: 'Actually, I want to become faster. Then I can run next to you, not behind you.', cap: '雨の体育館。肩に置かれた手で、スタートが少し軽くなる。', bg: 'rain', mo: 'rainy' },
-  { id: 'k3-4', ep: '3-4', t: 'オレンジのシューズ', w: 'toru', q: 'リレーはこれで走る。君の色が、一緒に走る。', en: "I'll run in them in the relay. Your color will run with me.", cap: '土曜のバス。古い靴は袋の中、新しい靴は君の色。', bg: 'day', mo: 'steps' },
-  { id: 'k3-5', ep: '3-5', t: '長くて赤いはちまき', w: 'toru', q: '……似合ってる。でも、僕は白組。それを言っちゃいけないんだけど。', en: "...It looks good on you. But I'm on White. I shouldn't say that.", cap: '放課後の窓。いちばん大きな声だけが、ここまで届く。', bg: 'eve', mo: 'campaign' },
-  { id: 'k3-6', ep: '3-6', t: '陽太の夏の文化', w: 'yota', q: '日本の夏は……お祭り！ それと……トオルと朝のランニング！', en: 'Summer in Japan... festivals! And... morning running with Toru!', cap: '英語の教室。並べた単語に、ひとつだけ名前がまざった。', bg: 'day', mo: 'public' },
-  { id: 'k3-7', ep: '3-7', t: '「人」なら決まってる', w: 'toru', q: 'どのお題でもいい。……もし「人」って書いてあったら、もう決まってる。', en: "Any card is OK. ...If it says 'a person', I already know who.", cap: '放課後の教室。ふたを閉めた箱の中に、三十の英語。', bg: 'eve', mo: 'inventory_2' },
-  { id: 'k3-8', ep: '3-8', t: '雨なら、もう一日', w: 'toru', q: '雨なら、少しうれしい。……赤と白になる前の日が、一日のびるから。', en: "If it rains, I'll be a little happy. ...One more day before we are red and white.", cap: '前の日の窓辺。赤いひもと白いひもの、てるてる坊主。', bg: 'night', mo: 'nights_stay' },
-  { id: 'k3-9', ep: '3-9', t: '赤いもの、見つけた', w: 'toru', q: '赤いものを探して、まわりを見た。……最初に見えたのが、君だった。', en: 'I looked around for something red. ...The first thing I saw was you.', cap: '晴れた校庭。赤いコーンの前を、まっすぐ素通りした。', bg: 'day', mo: 'sprint' },
-  { id: 'k3-10', ep: '3-10', t: 'ひとつ多い紙皿', w: 'toru', q: '今日は、家にいるみたいな気がした。', en: '...Today, I felt like I was at home.', cap: '昼休みのレジャーシート。紙皿が、ひとつ多かった。', bg: 'day', mo: 'bento' },
-  { id: 'k3-11', ep: '3-11', t: 'ゴールのテープより', w: 'yota', q: 'ゴールのテープより、お前のほうばっか見てた。', en: '', cap: 'リレーのあとの夕焼け。「なんでだろ」の答えは、まだ先。', bg: 'eve', mo: 'hourglass_top' },
-  { id: 'k3-12', ep: '3-12', t: '赤も、いい色だ', w: 'toru', q: '……もらっておく。赤も、いい色だ。', en: "...I'll keep it. Red is a good color, too.", cap: '終業式の図書室。赤は透の手に、白は陽太の手に。', bg: 'eve', mo: 'redeem' },
-  { id: 'kb-c3', bonus: 'c3', t: '白いはちまきの裏', w: 'note', q: '三月には、ふたりとも勝つ。', en: 'In March, we will both win.', cap: '終業式の夜。白い布の裏の小さな字を、辞書と読む。', bg: 'night', mo: 'ink_pen' },
-  { id: 'kc-c3', ch: 'c3', t: 'ふたりとも勝った', w: 'toru', q: 'リレーは赤の勝ち。今日は白の勝ち。……僕たち、ふたりとも勝った。', en: 'Red won the relay. White won the day. ...We both won.', cap: '得点板の前。赤と白のはちまきが、同じ風に揺れた。', bg: 'eve', mo: 'emoji_events' },
-  { id: 'ks-3', streak: 3, t: '三日目の朝', w: 'toru', q: '……今日も、来たんだ。', en: '', cap: '六時の川沿い。足音が、ふたつになった。', bg: 'day', mo: 'directions_run' },
-  { id: 'ks-7', streak: 7, t: '七日目の窓', w: 'toru', q: '七日続いたら、言おうと思ってた。……やっぱり、明日。', en: '', cap: '言いかけた言葉は、窓の外の夕焼けへ。', bg: 'eve', mo: 'window' },
-  { id: 'ks-14', streak: 14, t: '貸出票のふたり', w: 'toru', q: 'この本、返さなくていい。……君が持ってて。', en: '', cap: '貸出票の名前の欄に、ふたつの名前。', bg: 'dusk', mo: 'local_library' },
-  { id: 'kw-50', words: 50, t: '付箋の単語帳', w: 'toru', q: '君の単語帳、もう僕のより厚い。', en: '', cap: '付箋だらけのページに、ふたりぶんの字。', bg: 'day', mo: 'sticky_note_2' },
-  { id: 'kw-100', words: 100, t: '百語の帰り道', w: 'yota', q: '百個覚えたらアイスって、約束だろ？', en: '', cap: '夏の帰り道。半分こは、もう決まっている。', bg: 'dusk', mo: 'icecream' },
-  { id: 'kw-150', words: 150, t: '伸びる影', w: 'toru', q: '君の英語、もう僕がいなくても読めるね。……読まなくていいけど。', en: '', cap: '校門まで、影がふたつ伸びていく。', bg: 'eve', mo: 'wb_twilight' },
+  { id: 'k2-2', ep: '2-2', t: '最後のページ', w: 'note', q: '君は、何度でも読み返したい手紙みたいな人だ。', en: 'You are a letter I want to read again and again.', cap: '最後のページだけ、少しだけ丁寧な字。', bg: 'day', mo: 'edit_note', img: 1 },
+  { id: 'k2-3', ep: '2-3', t: '十時の電話', w: 'toru', q: 'ただ、君がいなくてさみしいだけ。', en: 'I just miss you.', cap: '日曜の夜。鳴るまでの、長い五分。', bg: 'night', mo: 'smartphone', img: 1 },
+  { id: 'k2-4', ep: '2-4', t: 'いつもの席', w: 'yota', q: '俺、トオルの隣がいちばん集中できるんだよな。', en: '', cap: 'ひそひそ声の教室を抜けて、図書室の奥へ。', bg: 'day', mo: 'event_seat', img: 1 },
+  { id: 'k2-5', ep: '2-5', t: '撮り直した一枚', w: 'toru', q: '待って。もう一回撮って。目をつぶった。', en: 'Wait. Take it again. I closed my eyes.', cap: '雨の日曜、カフェの窓辺。ちゃんと隣に写りたかった。', bg: 'rain', mo: 'photo_camera', img: 1 },
+  { id: 'k2-6', ep: '2-6', t: '四月の声', w: 'toru', q: '僕にとっては、特別だった。', en: 'It was special to me.', cap: '雨上がりの窓。名前を教えてくれた、あの日のこと。', bg: 'eve', mo: 'wb_twilight', img: 1 },
+  { id: 'k2-7', ep: '2-7', t: '筆箱のしおり', w: 'note', q: '君はやり方を知ってる。僕は君を信じてる。', en: 'You know the way. I believe in you.', cap: 'テストの朝。背中が、まっすぐになる。', bg: 'day', mo: 'bookmark', img: 1 },
+  { id: 'k2-8', ep: '2-8', t: '名前のお礼', w: 'toru', q: 'いつものように「トオル」って呼んで。', en: 'Call me Toru as you always do.', cap: '六十二点のお礼は、名前をひとつ。何度でも。', bg: 'eve', mo: 'chat_bubble', img: 1 },
+  { id: 'k2-9', ep: '2-9', t: 'ゆっくりの日本語', w: 'toru', q: '君と日本語で話すのが好きだ。ほかとは違う。', en: "I like speaking Japanese with you. It's different.", cap: '速い英語の輪をはなれて、ゆっくりの日本語へ。', bg: 'day', mo: 'translate', img: 1 },
+  { id: 'k2-10', ep: '2-10', t: '夕日のピアノ', w: 'toru', q: 'みんなにやさしいわけじゃない。……君にだけ。', en: "I'm not kind to everyone. ...Only to you.", cap: '伴奏と指揮。呼吸が、少しずつそろっていく。', bg: 'dusk', mo: 'piano', img: 1 },
+  { id: 'k2-11', ep: '2-11', t: '三つ目の理由', w: 'toru', q: 'それを見てるのが、好きだった。', en: 'I liked watching that.', cap: '雨、図書室、それから――まだ言えない。', bg: 'eve', mo: 'format_list_numbered', img: 1 },
+  { id: 'k2-12', ep: '2-12', t: '今のところは', w: 'toru', q: '……毎年。君の友だちとして。……今のところは。', en: '...Every year. As your friend. ...For now.', cap: '赤と白のはちまき。ふたりの夏が、始まる。', bg: 'dusk', mo: 'flag', img: 1 },
+  { id: 'kb-c2', bonus: 'c2', t: '送信ボタンの前で', w: 'yota', q: '君は僕のいちばんの友だち。……今は。', en: 'You are my best friend. ...Now.', cap: '終業式の夜。送るまでに、三分かかった。', bg: 'night', mo: 'send', img: 1 },
+  { id: 'kc-c2', ch: 'c2', t: '雨が好きになった', w: 'toru', q: '雨は好きだ。今は、もっと好き。', en: 'I like the rain. Now I like it more.', cap: '雨の音が、少しだけ大きくなった。', bg: 'rain', mo: 'water_drop', img: 1 },
+  { id: 'k3-1', ep: '3-1', t: '四月からの六時', w: 'toru', q: '四月に、ここで走りはじめた。……ある朝、君をここで見たから。', en: 'I started running here in April. ...Because I saw you here one morning.', cap: '七月の川沿い。三か月ぶんの朝が、やっと隣に並んだ。', bg: 'day', mo: 'wb_sunny', img: 1 },
+  { id: 'k3-2', ep: '3-2', t: 'アンカーは、君と僕', w: 'toru', q: '各チーム、走るのは四人。……最後の二人が、君と僕。', en: 'Each team has four runners. ...The last two are you and me.', cap: '黒板の名前の列。いちばん下に、赤と白がひとつずつ。', bg: 'dusk', mo: 'checklist', img: 1 },
+  { id: 'k3-3', ep: '3-3', t: '後ろじゃなくて、隣', w: 'toru', q: '本当は、もっと速くなりたい。そうすれば、君の後ろじゃなくて、隣を走れる。', en: 'Actually, I want to become faster. Then I can run next to you, not behind you.', cap: '雨の体育館。肩に置かれた手で、スタートが少し軽くなる。', bg: 'rain', mo: 'rainy', img: 1 },
+  { id: 'k3-4', ep: '3-4', t: 'オレンジのシューズ', w: 'toru', q: 'リレーはこれで走る。君の色が、一緒に走る。', en: "I'll run in them in the relay. Your color will run with me.", cap: '土曜のバス。古い靴は袋の中、新しい靴は君の色。', bg: 'day', mo: 'steps', img: 1 },
+  { id: 'k3-5', ep: '3-5', t: '長くて赤いはちまき', w: 'toru', q: '……似合ってる。でも、僕は白組。それを言っちゃいけないんだけど。', en: "...It looks good on you. But I'm on White. I shouldn't say that.", cap: '放課後の窓。いちばん大きな声だけが、ここまで届く。', bg: 'eve', mo: 'campaign', img: 1 },
+  { id: 'k3-6', ep: '3-6', t: '陽太の夏の文化', w: 'yota', q: '日本の夏は……お祭り！ それと……トオルと朝のランニング！', en: 'Summer in Japan... festivals! And... morning running with Toru!', cap: '英語の教室。並べた単語に、ひとつだけ名前がまざった。', bg: 'day', mo: 'public', img: 1 },
+  { id: 'k3-7', ep: '3-7', t: '「人」なら決まってる', w: 'toru', q: 'どのお題でもいい。……もし「人」って書いてあったら、もう決まってる。', en: "Any card is OK. ...If it says 'a person', I already know who.", cap: '放課後の教室。ふたを閉めた箱の中に、三十の英語。', bg: 'eve', mo: 'inventory_2', img: 1 },
+  { id: 'k3-8', ep: '3-8', t: '雨なら、もう一日', w: 'toru', q: '雨なら、少しうれしい。……赤と白になる前の日が、一日のびるから。', en: "If it rains, I'll be a little happy. ...One more day before we are red and white.", cap: '前の日の窓辺。赤いひもと白いひもの、てるてる坊主。', bg: 'night', mo: 'nights_stay', img: 1 },
+  { id: 'k3-9', ep: '3-9', t: '赤いもの、見つけた', w: 'toru', q: '赤いものを探して、まわりを見た。……最初に見えたのが、君だった。', en: 'I looked around for something red. ...The first thing I saw was you.', cap: '晴れた校庭。赤いコーンの前を、まっすぐ素通りした。', bg: 'day', mo: 'sprint', img: 1 },
+  { id: 'k3-10', ep: '3-10', t: 'ひとつ多い紙皿', w: 'toru', q: '今日は、家にいるみたいな気がした。', en: '...Today, I felt like I was at home.', cap: '昼休みのレジャーシート。紙皿が、ひとつ多かった。', bg: 'day', mo: 'bento', img: 1 },
+  { id: 'k3-11', ep: '3-11', t: 'ゴールのテープより', w: 'yota', q: 'ゴールのテープより、お前のほうばっか見てた。', en: '', cap: 'リレーのあとの夕焼け。「なんでだろ」の答えは、まだ先。', bg: 'eve', mo: 'hourglass_top', img: 1 },
+  { id: 'k3-12', ep: '3-12', t: '赤も、いい色だ', w: 'toru', q: '……もらっておく。赤も、いい色だ。', en: "...I'll keep it. Red is a good color, too.", cap: '終業式の図書室。赤は透の手に、白は陽太の手に。', bg: 'eve', mo: 'redeem', img: 1 },
+  { id: 'kb-c3', bonus: 'c3', t: '白いはちまきの裏', w: 'note', q: '三月には、ふたりとも勝つ。', en: 'In March, we will both win.', cap: '終業式の夜。白い布の裏の小さな字を、辞書と読む。', bg: 'night', mo: 'ink_pen', img: 1 },
+  { id: 'kc-c3', ch: 'c3', t: 'ふたりとも勝った', w: 'toru', q: 'リレーは赤の勝ち。今日は白の勝ち。……僕たち、ふたりとも勝った。', en: 'Red won the relay. White won the day. ...We both won.', cap: '得点板の前。赤と白のはちまきが、同じ風に揺れた。', bg: 'eve', mo: 'emoji_events', img: 1 },
+  { id: 'k4-1', ep: '4-1', t: '君の席を取っておくために', w: 'toru', q: '僕の席を取っておくために、早く来たの？', en: 'You came early to save this seat for me?', cap: '夏期講習の初日。筆箱から、白い布の端がのぞく。', bg: 'day', mo: 'schedule', img: 1 },
+  { id: 'k4-2', ep: '4-2', t: '毎朝、かぶる', w: 'toru', q: '帽子をくれて、ありがとう。……毎朝、かぶる。', en: "Thank you for giving me your cap. ...I'll wear it every morning.", cap: '朝六時の公園。紺の髪に、オレンジの帽子。', bg: 'day', mo: 'radio', img: 1 },
+  { id: 'k4-3', ep: '4-3', t: 'ひとりより、ふたり', w: 'toru', q: 'ひとりで食べるのも平気だった。……でも、君と食べるほうがいい。', en: 'Eating alone was OK. ...But eating with you is better.', cap: '夏の図書室の前のベンチ。お弁当箱が、二つ。', bg: 'day', mo: 'lunch_dining', img: 1 },
+  { id: 'k4-4', ep: '4-4', t: '特別な日にする', w: 'yota', q: '……来週じゃん。特別な日にする。俺が。', en: '', cap: 'リビングのピアノ。カレンダーの十六日に、まだ丸はない。', bg: 'eve', mo: 'home', img: 1 },
+  { id: 'k4-5', ep: '4-5', t: '僕じゃなくて、トラを', w: 'toru', q: '僕を撮ってるの？ スマホしまって。……僕じゃなくて、トラを見て。', en: 'Are you taking a video of me? Put your smartphone away. ...Look at the tiger, not me.', cap: '夏の動物園。動画の四本目、トラは三秒。', bg: 'day', mo: 'pets', img: 1 },
+  { id: 'k4-6', ep: '4-6', t: '待つのは得意', w: 'toru', q: '……じゃあ、待つ。待つのは得意だから。', en: "...Then I'll wait. I'm good at waiting.", cap: '夏期講習の最後の日。ノートの端に、消したあと。', bg: 'day', mo: 'mic', img: 1 },
+  { id: 'k4-7', ep: '4-7', t: '誘われるのを待ってた', w: 'toru', q: '忙しくなかった。……君に誘われるのを、待ってた。', en: "I wasn't busy. ...I was waiting for you to ask me.", cap: '夕方の図書室。貸出票の裏に、図書委員の字の英語。', bg: 'eve', mo: 'event', img: 1 },
+  { id: 'k4-8', ep: '4-8', t: '雪と、春の花を', w: 'note', q: 'いつか、君と旅をしたい。冬の雪と、春の花を見に。', en: 'Someday, I want to travel with you. To see the snow in winter, and the flowers in spring.', cap: 'お盆の三日間。英語のはがきに、鉛筆の訳。', bg: 'day', mo: 'train', img: 1 },
+  { id: 'k4-9', ep: '4-9', t: 'はぐれんな', w: 'yota', q: 'はぐれんな。……今日は、お前の日なんだから。', en: '', cap: '夕方の夜店。りんご飴の赤と、つないだ手。', bg: 'dusk', mo: 'festival', img: 1 },
+  { id: 'k4-10', ep: '4-10', t: '僕たちの川から', w: 'toru', q: '僕たちの川から、花火を見る……。いちばんの誕生日プレゼントだ。', en: "Watching fireworks from our river... It's the best birthday present.", cap: '毎朝走る川沿い。花火のたびに、横顔が光る。', bg: 'night', mo: 'celebration', img: 1 },
+  { id: 'k4-11', ep: '4-11', t: 'こんな夏を、もう一回', w: 'toru', q: 'こんな夏が、もう一回ほしい。……君と。毎年。', en: 'I want another summer like this. ...With you. Every year.', cap: '最後の大玉のあと。聞こえなかったひと言と、白いページ。', bg: 'night', mo: 'flare', img: 1 },
+  { id: 'k4-12', ep: '4-12', t: 'まだ終わってない', w: 'toru', q: '夏は終わった。……でも、僕たちの計画は、まだ終わってない。', en: "Summer is over. ...But our plan isn't finished yet.", cap: '始業式の図書室。答え合わせをした夏の計画に、新しい一枚。', bg: 'eve', mo: 'sports_tennis', img: 1 },
+  { id: 'kb-c4', bonus: 'c4', t: '消し忘れた一行', w: 'note', q: '僕の夢は、毎年、彼と花火を見ることです。', en: 'My dream is to watch the fireworks with him every year.', cap: '始業式の次の日。日本語の一行にだけ、そっと線を引いた。', bg: 'day', mo: 'draft', img: 1 },
+  { id: 'kc-c4', ch: 'c4', t: '君の色', w: 'toru', q: '……それと、オレンジ。君の色。', en: '...And orange. Your color.', cap: '夏の終わりの川沿い。空いっぱいに、君の色がひらく。', bg: 'night', mo: 'stars', img: 1 },
+  { id: 'ks-3', streak: 3, t: '三日目の朝', w: 'toru', q: '……今日も、来たんだ。', en: '', cap: '六時の川沿い。足音が、ふたつになった。', bg: 'day', mo: 'directions_run', img: 1 },
+  { id: 'ks-7', streak: 7, t: '七日目の窓', w: 'toru', q: '七日続いたら、言おうと思ってた。……やっぱり、明日。', en: '', cap: '言いかけた言葉は、窓の外の夕焼けへ。', bg: 'eve', mo: 'window', img: 1 },
+  { id: 'ks-14', streak: 14, t: '貸出票のふたり', w: 'toru', q: 'この本、返さなくていい。……君が持ってて。', en: '', cap: '貸出票の名前の欄に、ふたつの名前。', bg: 'dusk', mo: 'local_library', img: 1 },
+  { id: 'kw-50', words: 50, t: '付箋の単語帳', w: 'toru', q: '君の単語帳、もう僕のより厚い。', en: '', cap: '付箋だらけのページに、ふたりぶんの字。', bg: 'day', mo: 'sticky_note_2', img: 1 },
+  { id: 'kw-100', words: 100, t: '百語の帰り道', w: 'yota', q: '百個覚えたらアイスって、約束だろ？', en: '', cap: '夏の帰り道。半分こは、もう決まっている。', bg: 'dusk', mo: 'icecream', img: 1 },
+  { id: 'kw-150', words: 150, t: '伸びる影', w: 'toru', q: '君の英語、もう僕がいなくても読めるね。……読まなくていいけど。', en: '', cap: '校門まで、影がふたつ伸びていく。', bg: 'eve', mo: 'wb_twilight', img: 1 },
+  { id: 'kw-300', words: 300, t: '三百語の夏', w: 'yota', q: '三百個！ ……なあ、トオル。あと何個覚えたら、お前の英語、全部読める？', en: '', cap: '夏期講習の帰り道。オレンジの帽子が、少し先を歩く。', bg: 'dusk', mo: 'trending_up', img: 1 },
 ];
 const epWords = ep => WORDS.filter(w => w.ep === ep.id);
 const chWords = c => WORDS.filter(w => c.eps.some(ep => ep.id === w.ep));
@@ -1717,6 +2200,9 @@ const DOC_PHONE = '<table class="dt"><tr><td>21:02</td><td>陽太</td><td>最後
 const DOC_RUN = '<table class="dt"><tr><th>日付</th><th>走りはじめ</th><th>走った時間</th><th>メモ</th></tr><tr><td>7/9</td><td>6:00</td><td>30分</td><td>陽太が6分遅れた</td></tr><tr><td>7/10</td><td>6:00</td><td>30分</td><td>陽太、目覚まし4つ</td></tr><tr><td>7/11</td><td>6:00</td><td>30分</td><td>公園の犬に会った</td></tr></table>';
 const DOC_PROG = '<table class="dt"><tr><th>時刻</th><th>体育祭のプログラム（7月18日）</th></tr><tr><td>9:00</td><td>開会式</td></tr><tr><td>9:30</td><td>借り物競走</td></tr><tr><td>12:00</td><td>昼休み（お弁当）</td></tr><tr><td>13:00</td><td>応援合戦</td></tr><tr><td>14:30</td><td>赤白リレー（最後の種目）</td></tr></table>';
 const DIARY = ['July 18', 'Today was sports day. The sky was beautiful.', 'In the borrowing race, my card said "Something red." I borrowed Yota\'s headband.', 'Red won the relay, but White won the day. We both won.', 'Yesterday, I wanted rain. Today, I am glad it was sunny.'];
+const DOC_KOSHU = '<table class="dt"><tr><th>時刻</th><th>夏期講習（三年・7月27日〜8月12日）</th></tr><tr><td>8:30</td><td>理科の小テスト（30問）</td></tr><tr><td>9:00</td><td>数学</td></tr><tr><td>10:30</td><td>英語（ローズ先生）</td></tr><tr><td>12:00</td><td>昼休み（図書室は火曜と木曜だけ開館）</td></tr></table>';
+const DOC_HANABI = '<table class="dt"><tr><th>日にち</th><td>8月16日（日）　雨のときは17日（月）</td></tr><tr><th>夜店</th><td>17:00から（河川敷）</td></tr><tr><th>花火</th><td>19:30〜20:30</td></tr><tr><th>見る人</th><td>無料</td></tr></table>';
+const POSTCARD = ['Dear Yota,', "When I lived abroad, I didn't like summer. Now I do.", 'I run by the river every morning, but it is quiet without you.', 'Someday, I want to travel with you. To see the snow in winter, and the flowers in spring.', 'P.S. I drew a map. Where should we watch the fireworks?', 'Toru'];
 const NYUSHI = {
   c1: [
     { t: 'gform', w: 'speak', q: 'Toru [speaks] English when he is nervous.', g: ['speak', 'speaks', 'spoke', 'speaking'], ja: '透は緊張すると英語を話す。（he・いまのこと → speaks）' },
@@ -1762,6 +2248,21 @@ const NYUSHI = {
     { t: 'lmemo', w: 'six', who: 'toru', scene: '［体育祭の前の夜、透から陽太への留守番電話］', audio: "Hi Yota, it's Toru. If it rains tomorrow, sports day will be on Sunday. But let's run in the morning. Meet me at the park at six. Don't be late.", q: 'Time: [six] in the morning', ja: 'やあ陽太、透だ。明日雨なら、体育祭は日曜日。でも朝は走ろう。六時に公園で。遅れないで。' },
     { t: 'resp', w: 'favorite', who: 'toru', scene: '［土曜日のスポーツ店で］', audio: "Which color do you like? What's your favorite color?", choices: ["Orange. It's my favorite.", 'I usually take the bus.', "It's a small shop.", 'Yes, I ate breakfast.'], ans: 0, ja: '透「どの色が好き？ いちばん好きな色は？」→「オレンジ。いちばん好き」' },
     { t: 'resp', w: 'bring', who: 'yota', scene: '［体育祭の朝、グラウンドで］', audio: 'Hey Toru, did you bring your new shoes?', choices: ["Yes. I'm wearing them now.", "No, it's a traditional festival.", "Yes, I'll clean the room.", 'I like pizza very much.'], ans: 0, ja: '陽太「トオル、新しい靴持ってきた？」→「うん。いま、はいてるよ」' },
+  ],
+  c4: [
+    { t: 'gform', w: 'save', q: 'Yota came early to [save] a seat for Toru.', g: ['save', 'saves', 'saved', 'saving'], ja: '陽太は、透の席を取っておくために早く来た。（to のあと → もとの形）' },
+    { t: 'gform', w: 'run', q: 'Toru enjoys [running] by the river every morning.', g: ['run', 'runs', 'ran', 'running'], ja: '透は毎朝、川沿いを走るのを楽しんでいる。（enjoy のあと → ing）' },
+    { t: 'gform', w: 'travel', q: 'Toru wants to [travel] with Yota someday.', g: ['travel', 'travels', 'traveled', 'traveling'], ja: '透は、いつか陽太と旅をしたいと思っている。（want to のあと → もとの形）' },
+    { t: 'gform', w: 'carry', q: 'Thank you for [carrying] my bag, Toru.', g: ['carry', 'carries', 'carried', 'carrying'], ja: 'トオル、かばんを持ってくれてありがとう。（for のあと → ing）' },
+    { t: 'shiryo', w: 'science', title: '夏期講習の時間割（三年）', html: DOC_KOSHU, q: 'We have a [science] quiz at eight thirty.', ja: '8時30分に理科の小テストがある。' },
+    { t: 'shiryo', w: 'open', title: '夏期講習の時間割（三年）', html: DOC_KOSHU, q: 'In summer, the library is [open] on Tuesday and Thursday.', ja: '夏は、図書室は火曜日と木曜日に開いている。' },
+    { t: 'shiryo', w: 'free', title: '花火大会のお知らせ', html: DOC_HANABI, q: "You don't need money to watch the fireworks. It's [free].", ja: '花火を見るのに、お金はいらない。無料だ。' },
+    { t: 'read', w: 'abroad', title: "Toru's postcard", passage: POSTCARD, q: 'Before Toru came to Japan, he lived [abroad].', ja: '透は日本に来る前、外国に住んでいた。（はがき：外国に住んでいたころは……）' },
+    { t: 'read', w: 'snow', title: "Toru's postcard", passage: POSTCARD, q: 'In winter, Toru wants to see the [snow] with Yota.', ja: '冬に、透は陽太と雪を見たいと思っている。' },
+    { t: 'lmemo', w: 'five', who: 'toru', scene: '［花火大会の前の日、透から陽太への留守番電話］', audio: "Hi Yota, it's Toru. Thank you for asking me to the fireworks. Let's meet at the bridge at five. I'll bring some water to drink. See you tomorrow.", q: 'Time: [five] o\'clock, at the bridge', ja: 'やあ陽太、透だ。花火に誘ってくれてありがとう。五時に橋のところで会おう。飲む水は僕が持っていく。また明日。' },
+    { t: 'lmemo', w: 'water', who: 'toru', scene: '［花火大会の前の日、透から陽太への留守番電話］', audio: "Hi Yota, it's Toru. Thank you for asking me to the fireworks. Let's meet at the bridge at five. I'll bring some water to drink. See you tomorrow.", q: 'Toru will bring some [water].', ja: 'やあ陽太、透だ。花火に誘ってくれてありがとう。五時に橋のところで会おう。飲む水は僕が持っていく。また明日。' },
+    { t: 'resp', w: 'busy', who: 'yota', scene: '［夕方の図書室で］', audio: 'Are you busy on the sixteenth?', choices: ["No. I'm free that day.", "Yes, it's a large zoo.", 'I like reading stories.', "No, I don't like salad."], ans: 0, ja: '陽太「十六日、忙しい？」→「ううん。その日は空いてるよ」' },
+    { t: 'resp', w: 'drink', who: 'yota', scene: '［朝のラジオ体操のあとで］', audio: 'Do you want something to drink?', choices: ['Yes, please. Some water.', 'No, I came early.', "Yes, it's my birthday.", 'I like science.'], ans: 0, ja: '陽太「何か飲むもの、いる？」→「うん、お願い。水がいいな」' },
   ],
 };
 
@@ -2396,9 +2897,9 @@ function startLessonQuiz(ep, list) {
    書く問題は頭文字なし・綴りの完全一致（北海道の公立入試に合わせる）。ヒントは本人が押したときだけ出す。
    まちがいは赤や×にしない。本人の答えを残したまま、合っている文字に線を引く（memory: learner-self-correction）
    ========================================================= */
-const IRREG = { eat: 'ate', choose: 'chose', read: 'read', meet: 'met', speak: 'spoke', understand: 'understood', teach: 'taught', forget: 'forgot', stand: 'stood', write: 'wrote', send: 'sent', make: 'made', come: 'came', go: 'went', have: 'had', see: 'saw', get: 'got', take: 'took', give: 'gave', say: 'said', tell: 'told', think: 'thought', know: 'knew', leave: 'left', find: 'found', feel: 'felt', keep: 'kept', sit: 'sat', run: 'ran', begin: 'began', bring: 'brought', buy: 'bought', catch: 'caught', lose: 'lost', hear: 'heard', win: 'won', become: 'became', wear: 'wore', put: 'put' };
-const S_IRREG = { life: 'lives', child: 'children', man: 'men', woman: 'women', person: 'people', foot: 'feet', tooth: 'teeth', leaf: 'leaves', knife: 'knives', wife: 'wives' };
-const ING_IRREG = { forget: 'forgetting', sit: 'sitting', run: 'running', begin: 'beginning', get: 'getting', stop: 'stopping', swim: 'swimming', put: 'putting', plan: 'planning', die: 'dying', lie: 'lying', win: 'winning' };
+const IRREG = { eat: 'ate', choose: 'chose', read: 'read', meet: 'met', speak: 'spoke', understand: 'understood', teach: 'taught', forget: 'forgot', stand: 'stood', write: 'wrote', send: 'sent', make: 'made', come: 'came', go: 'went', have: 'had', see: 'saw', get: 'got', take: 'took', give: 'gave', say: 'said', tell: 'told', think: 'thought', know: 'knew', leave: 'left', find: 'found', feel: 'felt', keep: 'kept', sit: 'sat', run: 'ran', begin: 'began', bring: 'brought', buy: 'bought', catch: 'caught', lose: 'lost', hear: 'heard', win: 'won', become: 'became', wear: 'wore', put: 'put', sleep: 'slept', drink: 'drank', pay: 'paid' };
+const S_IRREG = { life: 'lives', child: 'children', man: 'men', woman: 'women', person: 'people', foot: 'feet', tooth: 'teeth', leaf: 'leaves', knife: 'knives', wife: 'wives', zoo: 'zoos', radio: 'radios', piano: 'pianos' };
+const ING_IRREG = { forget: 'forgetting', sit: 'sitting', run: 'running', begin: 'beginning', get: 'getting', stop: 'stopping', swim: 'swimming', put: 'putting', plan: 'planning', die: 'dying', lie: 'lying', win: 'winning', continue: 'continuing' };
 /** 語形を作る（t：s＝3単現・複数／ed＝過去／ing） */
 function inflect(b, t) {
   if (t === 's' && S_IRREG[b]) return S_IRREG[b];
@@ -2449,9 +2950,10 @@ function makeChoices(w, fmt) {
 }
 /** 語群（大問2問1型）：答えと同じ形にそろえた4語 */
 const NO_PLURAL = new Set(['information', 'today', 'tomorrow', 'home', 'rain', 'homework', 'music', 'advice', 'news', 'money', 'english', 'japanese', 'japan', 'one', 'two', 'three', 'lot', 'future', 'people',
-  'six', 'four', 'breakfast', 'lunch', 'food', 'soccer', 'basketball', 'tennis', 'internet', 'yesterday', 'everyone', 'something']);
+  'six', 'four', 'breakfast', 'lunch', 'food', 'soccer', 'basketball', 'tennis', 'internet', 'yesterday', 'everyone', 'something',
+  'thirty', 'twenty', 'five', 'science', 'health', 'weather', 'water', 'bread', 'living', 'snow', 'corn', 'history', 'badminton', 'someone', 'anything']);
 /** 過去形そのものが見出しの語（felt・thought）。s・ed・ing の語群には並べない（felted のような形を作らない） */
-const PAST_HEAD = new Set(['felt', 'thought']);
+const PAST_HEAD = new Set(['felt', 'thought', 'born', 'means']);   // born（生まれた）・means（mean の三単現）も、形の変わった見出し
 function pickGroup(w) {
   const ft = formType(w), form = exForm(w).toLowerCase();
   const out = [/^[A-Z]/.test(w.en) ? exForm(w) : form], seen = new Set([form]);   // Japan などは大文字のまま見せる
@@ -2924,13 +3426,74 @@ function cardCheck() {
 /** 人物の入った場面（見本・v0.9）。顔は描かない：後ろ姿・逆光のシルエット・ふちの光で、表情が見えない写り方にする。
  *  画像生成は使わない（旭川市生成AIガイドライン Ver.1.0 Ⅲ2）。SVG の id はカードごとに変える（同じ場面が何枚あっても混ざらない） */
 let sceneSeq = 0;
-/** 場面カードの絵の置き場。GAS 版は差しこまれた中身（1行に「id 中身」）から、それ以外は img/cards/ のファイルから */
-const CARD_IMG = (() => {
-  const m = {}, el = document.getElementById('card-img');
-  if (el) el.textContent.trim().split('\n').forEach(l => { const [id, b] = l.trim().split(' '); if (id && b) m[id] = 'data:image/jpeg;base64,' + b; });
-  return m;
-})();
-const cardImg = c => c.img ? (CARD_IMG[c.id] || `img/cards/${c.id}.jpg`) : '';
+/** 場面カードの絵。手元・Pages・体験版は img/cards/<id>.jpg のファイルを直接読む。
+ *  GAS 版はファイルを配れないので、見るときに Code.gs の getCardImgs から絵の中身（base64）を取りに行く
+ *  （最初に読みこむ画面を、絵の枚数によらず軽く保つため）。取りに行くのは画面に入ったカードだけ・同時に3本まで・1本に4枚まで。
+ *  取ってきた絵はこの画面を開いている間だけ覚え、同じ絵は2回取りに行かない。来るまで・来なかったら（失敗・10秒）CSS の絵のまま */
+const CARD_GAS = (() => { try { return !!(typeof google !== 'undefined' && google.script && google.script.run); } catch (e) { return false; } })();
+const cardImgMem = new Map();   // id → data URI（GAS 版で取ってきた絵）
+const cardImg = c => !c.img ? '' : CARD_GAS ? (cardImgMem.get(c.id) || '') : `img/cards/${c.id}.jpg`;
+const CIMG = { want: [], busy: 0, asked: new Set(), fails: {}, io: null, seen: new Set(), soon: 0, pump: 0, MAX: 3, PER: 4, WAIT: 10000 };
+/** まだ絵の来ていないカード（data-cimg）を探し、画面に入ったら取りに行く */
+function cardImgScan() {
+  CIMG.soon = 0;
+  if (CIMG.io) CIMG.seen.forEach(a => { if (!a.isConnected) { CIMG.io.unobserve(a); CIMG.seen.delete(a); } });   // 描き直しで消えたカードは見張りをやめる
+  document.querySelectorAll('.tc-art[data-cimg]:not([data-cw])').forEach(a => {
+    a.setAttribute('data-cw', '1');
+    if (cardImgMem.has(a.dataset.cimg)) cardImgPaint(a.dataset.cimg);
+    else if (CIMG.io) { CIMG.io.observe(a); CIMG.seen.add(a); }
+    else cardImgWant(a.dataset.cimg);
+  });
+}
+function cardImgWant(id) {
+  if (cardImgMem.has(id)) { cardImgPaint(id); return; }
+  if (CIMG.asked.has(id) || (CIMG.fails[id] || 0) >= 2) return;   // 2回だめだった絵は、この画面では CSS の絵のまま
+  CIMG.asked.add(id); CIMG.want.push(id);
+  if (!CIMG.pump) CIMG.pump = setTimeout(() => { CIMG.pump = 0; cardImgPump(); }, 0);   // 同じときに見えたカードを1本にまとめてから送る
+}
+function cardImgPump() {
+  while (CIMG.busy < CIMG.MAX && CIMG.want.length) {
+    const ids = CIMG.want.splice(0, CIMG.PER);
+    let done = false, timer = 0;
+    const finish = res => {
+      const first = !done;
+      if (first) { done = true; clearTimeout(timer); CIMG.busy--; }
+      ids.forEach(id => {
+        const b = res && typeof res === 'object' ? res[id] : '';
+        if (typeof b === 'string' && b.length > 100 && /^[A-Za-z0-9+/=]+$/.test(b)) {
+          if (!cardImgMem.has(id)) { cardImgMem.set(id, 'data:image/jpeg;base64,' + b); cardImgPaint(id); }
+        } else if (first) CIMG.fails[id] = (CIMG.fails[id] || 0) + 1;
+        if (first) CIMG.asked.delete(id);
+      });
+      if (first) cardImgPump();   // 10秒を過ぎて届いた絵も、来たら差す（空いた口は先に次へ回す）
+    };
+    CIMG.busy++;
+    timer = setTimeout(() => finish(null), CIMG.WAIT);
+    try { google.script.run.withSuccessHandler(finish).withFailureHandler(() => finish(null)).getCardImgs(ids); }
+    catch (e) { finish(null); }
+  }
+}
+/** 届いた絵を、いま画面にあるそのカードに差す（CSS の絵を外し、またたく粒だけ残す） */
+function cardImgPaint(id) {
+  const src = cardImgMem.get(id);
+  document.querySelectorAll('.tc-art[data-cimg]').forEach(a => {
+    if (a.dataset.cimg !== id) return;
+    if (CIMG.io) { CIMG.io.unobserve(a); CIMG.seen.delete(a); }
+    const sp = [...a.querySelectorAll('.tc-sp')].map(x => x.outerHTML).join('');
+    a.removeAttribute('data-cimg'); a.removeAttribute('data-cw');
+    a.className = 'tc-art has-img';
+    a.innerHTML = `<img class="tc-img tc-img-in" src="${src}" alt="" decoding="async" onerror="this.remove()">${sp}`;
+  });
+}
+if (CARD_GAS) {
+  if ('IntersectionObserver' in window) CIMG.io = new IntersectionObserver(es => es.forEach(e => {
+    if (!e.isIntersecting) return;
+    CIMG.io.unobserve(e.target); CIMG.seen.delete(e.target);
+    if (e.target.dataset.cimg) cardImgWant(e.target.dataset.cimg);
+  }), { rootMargin: '200px 0px' });
+  // カードはいろいろな画面で innerHTML から描かれるので、足された要素を見張って探す
+  new MutationObserver(() => { if (!CIMG.soon) CIMG.soon = setTimeout(cardImgScan, 0); }).observe(document.body, { childList: true, subtree: true });
+}
 const SCENES = {
   // 相合傘：昇降口の中から、雨の外へ出る二人の後ろ姿。外の光で影になる
   kasa(u) {
@@ -3020,9 +3583,11 @@ function cardArt(c) {
   // 絵のあるカードは、絵にまたたく粒だけを重ねる（にじみと光は絵の中にある）。読めなかったら絵を外し、白い紙のまま
   const src = cardImg(c);
   if (src) return `<div class="tc-art has-img"><img class="tc-img" src="${src}" alt="" decoding="async" onerror="this.remove()">${sparks}</div>`;
+  // GAS 版で絵がまだ来ていないカードは、印（data-cimg）を付けて CSS の絵で描く。絵が届いたら cardImgPaint が差しかえる
+  const wait = c.img && CARD_GAS ? ` data-cimg="${c.id}"` : '';
   // 人物の入った場面があるカードは、その絵に光の粒とぼけだけを重ねる（窓・モチーフは場面の中に描いてある）
-  if (c.sc && SCENES[c.sc]) return `<div class="tc-art has-scene bg-${c.bg}">${SCENES[c.sc]('sc' + (++sceneSeq) + '-')}${bokeh}${sparks}<i class="tc-fx"></i></div>`;
-  return `<div class="tc-art bg-${c.bg}">${sky}<i class="tc-sash"></i>${glow}${bokeh}${sparks}<span class="material-symbols-outlined tc-motif" aria-hidden="true">${c.mo}</span><i class="tc-fx"></i></div>`;
+  if (c.sc && SCENES[c.sc]) return `<div class="tc-art has-scene bg-${c.bg}"${wait}>${SCENES[c.sc]('sc' + (++sceneSeq) + '-')}${bokeh}${sparks}<i class="tc-fx"></i></div>`;
+  return `<div class="tc-art bg-${c.bg}"${wait}>${sky}<i class="tc-sash"></i>${glow}${bokeh}${sparks}<span class="material-symbols-outlined tc-motif" aria-hidden="true">${c.mo}</span><i class="tc-fx"></i></div>`;
 }
 /** カード1枚。o.big＝大きく／o.mini＝アルバムの1枚（NEW の印）／o.locked＝まだ持っていない（伏せ札） */
 function cardHTML(c, o = {}) {
